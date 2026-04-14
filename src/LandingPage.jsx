@@ -16,7 +16,6 @@ const GlobalStyle = () => (
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
     .gold-btn {
       background: linear-gradient(135deg, var(--gold), var(--gold-lt));
       color: #1a1410; border: none; border-radius: 10px;
@@ -25,7 +24,6 @@ const GlobalStyle = () => (
       transition: all .2s; display: inline-flex; align-items: center; gap: 8px;
     }
     .gold-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(201,168,76,.4); }
-
     .ghost-btn {
       background: transparent; border: 1px solid var(--border);
       color: var(--text); border-radius: 10px; padding: 13px 28px;
@@ -33,114 +31,74 @@ const GlobalStyle = () => (
       cursor: pointer; transition: all .2s;
     }
     .ghost-btn:hover { border-color: var(--gold); color: var(--gold); }
-
     @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
     @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
     @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-    @keyframes spin { to{transform:rotate(360deg)} }
-
     .fade-up { animation: fadeUp .6s ease both; }
     .delay-1 { animation-delay: .1s; }
     .delay-2 { animation-delay: .2s; }
     .delay-3 { animation-delay: .3s; }
     .delay-4 { animation-delay: .4s; }
-
     .gradient-text {
       background: linear-gradient(135deg, var(--gold), var(--gold-lt), #fff8e7, var(--gold));
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: shimmer 4s linear infinite;
+      background-size: 200% auto; -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; animation: shimmer 4s linear infinite;
     }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
-    }
-
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      transition: all .3s;
-    }
-    .feature-card:hover {
-      border-color: var(--gold);
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(201,168,76,.1);
-    }
-
     section { padding: 100px 0; }
     .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
-
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      padding: 16px 0;
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(42,39,35,.5);
-      background: rgba(10,9,8,.8);
+      padding: 16px 0; backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(42,39,35,.5); background: rgba(10,9,8,.8);
     }
-
     .nav-inner {
       max-width: 1100px; margin: 0 auto; padding: 0 24px;
       display: flex; justify-content: space-between; align-items: center;
     }
-
     .badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 20px;
-      background: rgba(201,168,76,.1); border: 1px solid rgba(201,168,76,.3);
-      color: var(--gold); font-size: 12px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+      border-radius: 20px; background: rgba(201,168,76,.1);
+      border: 1px solid rgba(201,168,76,.3); color: var(--gold); font-size: 12px; font-weight: 600;
     }
-
-    .check-item {
-      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;
+    .feature-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px; transition: all .3s;
     }
-    .check-icon {
-      width: 20px; height: 20px; border-radius: 50%;
-      background: rgba(76,175,125,.15);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; margin-top: 1px;
-    }
-
-    .testimonial {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-    }
-
+    .feature-card:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(201,168,76,.1); }
     .pricing-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
-      transition: all .3s;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; display: flex; flex-direction: column;
     }
-    .pricing-card.popular {
-      border-color: var(--gold);
-      box-shadow: 0 0 60px rgba(201,168,76,.15);
-    }
+    .pricing-card.popular { border-color: var(--gold); box-shadow: 0 0 60px rgba(201,168,76,.15); }
 
-     @media (max-width: 768px) {
-  section { padding: 60px 0 !important; }
-  h1 { font-size: 38px !important; }
-  h2 { font-size: 30px !important; }
-  .grid-3 { grid-template-columns: 1fr !important; gap: 12px !important; }
-  .pricing-grid { grid-template-columns: 1fr !important; max-width: 100% !important; }
-  .hero-buttons { flex-direction: column !important; align-items: stretch !important; }
-  .hero-mockup { display: none !important; }
-  .footer-inner { flex-direction: column !important; text-align: center !important; }
-  .nav-links { display: none !important; }
-  .nav-btns { display: none !important; }
-  .mobile-cta { display: flex !important; }
-}}
+    /* Grid classes */
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .grid-testimonials { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; max-width: 900px; margin: 0 auto; }
+    .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .footer-grid { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-btns { display: flex; gap: 10px; }
+    .mobile-btn { display: none; }
+    .hero-mockup { display: block; }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      section { padding: 60px 0 !important; }
+      .container { padding: 0 16px; }
+      .nav-inner { padding: 0 16px; }
+      h1 { font-size: 36px !important; }
+      h2 { font-size: 28px !important; }
+      .nav-links { display: none !important; }
+      .nav-btns { display: none !important; }
+      .mobile-btn { display: flex !important; }
+      .hero-mockup { display: none !important; }
+      .grid-3 { grid-template-columns: 1fr !important; gap: 12px !important; }
+      .grid-testimonials { grid-template-columns: 1fr !important; gap: 12px !important; }
+      .pricing-grid { grid-template-columns: 1fr !important; max-width: 100% !important; }
+      .hero-buttons { flex-direction: column !important; align-items: stretch !important; }
+      .hero-buttons button { width: 100% !important; justify-content: center !important; }
+      .footer-grid { flex-direction: column !important; text-align: center !important; }
     }
   `}</style>
 );
@@ -156,33 +114,29 @@ const Icon = ({ name, size=20, color="currentColor" }) => {
     star:     "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
     arrow:    "M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z",
     phone:    "M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z",
-    pain1:    "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z",
-    pain2:    "M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z",
-    pain3:    "M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z",
-    menu:     "M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z",
-    close:    "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ flexShrink:0 }}><path d={paths[name]||paths.star}/></svg>;
 };
 
 export default function LandingPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const goToApp = () => window.location.href = "/app";
+  const goToApp = () => {
+    localStorage.setItem('salonpro_user', 'true');
+    window.location.href = '/?app=true';
+  };
 
   return (
     <>
       <GlobalStyle />
 
       {/* NAV */}
-      <nav style={{ borderBottomColor: scrolled ? "rgba(42,39,35,.8)" : "transparent" }}>
+      <nav>
         <div className="nav-inner">
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ width:34, height:34, borderRadius:10, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -190,81 +144,58 @@ export default function LandingPage() {
             </div>
             <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:700, color:"var(--cream)" }}>SalonPro</span>
           </div>
-          <div className="hide-mobile" style={{ display:"flex", alignItems:"center", gap:32 }}>
+          <div className="nav-links">
             {["Features","Pricing","Testimonials"].map(item => (
-              <a key={item} href={`#${item.toLowerCase()}`} style={{ color:"var(--muted)", fontSize:14, textDecoration:"none", transition:"color .2s" }}
-                onMouseEnter={e=>e.target.style.color="var(--cream)"}
-                onMouseLeave={e=>e.target.style.color="var(--muted)"}>{item}</a>
+              <a key={item} href={`#${item.toLowerCase()}`} style={{ color:"var(--muted)", fontSize:14, textDecoration:"none" }}>{item}</a>
             ))}
           </div>
-          <div className="hide-mobile" style={{ display:"flex", gap:10 }}>
+          <div className="nav-btns">
             <button className="ghost-btn" style={{ padding:"9px 20px", fontSize:14 }} onClick={goToApp}>Sign in</button>
             <button className="gold-btn" style={{ padding:"9px 20px", fontSize:14 }} onClick={goToApp}>Start Free Trial</button>
           </div>
-          <button className="hide-desktop" onClick={()=>setMenuOpen(!menuOpen)} style={{ background:"none", border:"none", color:"var(--text)", cursor:"pointer", display:"none" }}>
-            <Icon name={menuOpen?"close":"menu"} size={24}/>
-          </button>
+          <button className="gold-btn mobile-btn" style={{ padding:"9px 16px", fontSize:13 }} onClick={goToApp}>Try Free</button>
         </div>
       </nav>
 
       {/* HERO */}
       <section style={{ paddingTop:160, paddingBottom:80, position:"relative", overflow:"hidden" }}>
-        {/* Background glow */}
         <div style={{ position:"absolute", top:"20%", left:"50%", transform:"translateX(-50%)", width:600, height:600, background:"radial-gradient(circle, rgba(201,168,76,.08) 0%, transparent 70%)", pointerEvents:"none" }}/>
-
         <div className="container" style={{ textAlign:"center" }}>
           <div className="fade-up" style={{ marginBottom:24 }}>
             <span className="badge">✦ Now with AI-powered automation</span>
           </div>
-
           <h1 className="fade-up delay-1" style={{ fontSize:72, lineHeight:1.05, marginBottom:24, color:"var(--cream)" }}>
-            Your salon,<br/>
-            <span className="gradient-text">perfectly organised</span>
+            Your salon,<br/><span className="gradient-text">perfectly organised</span>
           </h1>
-
           <p className="fade-up delay-2" style={{ fontSize:20, color:"var(--muted)", maxWidth:560, margin:"0 auto 40px", lineHeight:1.6 }}>
             SalonPro replaces your pen & paper, WhatsApp chaos, and missed calls with one beautiful system — powered by AI.
           </p>
-
-          <div className="fade-up delay-3" style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
+          <div className="fade-up delay-3 hero-buttons">
             <button className="gold-btn" style={{ fontSize:16, padding:"16px 32px" }} onClick={goToApp}>
               Start Free Trial <Icon name="arrow" size={18} color="#1a1410"/>
             </button>
-            <button className="ghost-btn" style={{ fontSize:16, padding:"16px 32px" }}>
-              Watch demo ▶
-            </button>
+            <button className="ghost-btn" style={{ fontSize:16, padding:"16px 32px" }}>Watch demo ▶</button>
           </div>
-
           <p className="fade-up delay-4" style={{ marginTop:16, fontSize:13, color:"var(--muted)" }}>
             14-day free trial · No credit card required · Cancel anytime
           </p>
-
-          {/* Hero image / mockup */}
-          <div className="fade-up delay-4" style={{ marginTop:64, position:"relative" }}>
-            <div style={{ background:"linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%)", border:"1px solid var(--border)", borderRadius:20, padding:24, maxWidth:800, margin:"0 auto", boxShadow:"0 40px 80px rgba(0,0,0,.6)", animation:"float 6s ease-in-out infinite" }}>
-              {/* Fake dashboard preview */}
-              <div style={{ display:"grid", gridTemplateColumns:"180px 1fr", gap:0, height:380, borderRadius:12, overflow:"hidden", border:"1px solid var(--border)" }}>
-                {/* Sidebar */}
+          {/* Mockup — hidden on mobile via CSS */}
+          <div className="fade-up delay-4 hero-mockup" style={{ marginTop:64 }}>
+            <div style={{ background:"linear-gradient(180deg,var(--surface) 0%,var(--bg) 100%)", border:"1px solid var(--border)", borderRadius:20, padding:24, maxWidth:800, margin:"0 auto", boxShadow:"0 40px 80px rgba(0,0,0,.6)", animation:"float 6s ease-in-out infinite" }}>
+              <div style={{ display:"grid", gridTemplateColumns:"180px 1fr", height:380, borderRadius:12, overflow:"hidden", border:"1px solid var(--border)" }}>
                 <div style={{ background:"#1a1816", borderRight:"1px solid var(--border)", padding:16, display:"flex", flexDirection:"column", gap:8 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16 }}>
                     <div style={{ width:28, height:28, borderRadius:8, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))" }}/>
-                    <div>
-                      <div style={{ fontSize:12, fontWeight:700, color:"var(--cream)", fontFamily:"'Cormorant Garamond',serif" }}>SalonPro</div>
-                      <div style={{ fontSize:9, color:"var(--muted)" }}>MANAGEMENT</div>
-                    </div>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--cream)", fontFamily:"'Cormorant Garamond',serif" }}>SalonPro</div>
                   </div>
-                  {[["Dashboard","#c9a84c",true],["Calendar","#7a7167",false],["Clients","#7a7167",false],["AI Hub","#7a7167",false],["Analytics","#7a7167",false]].map(([label,color,active])=>(
-                    <div key={label} style={{ padding:"8px 10px", borderRadius:8, background:active?"rgba(201,168,76,.12)":"transparent", fontSize:12, color, display:"flex", alignItems:"center", gap:8 }}>
-                      <div style={{ width:6, height:6, borderRadius:"50%", background:active?"var(--gold)":"transparent", border:active?"none":"1px solid var(--border)" }}/>
-                      {label}
-                    </div>
+                  {[["Dashboard","#c9a84c",true],["Calendar","#7a7167",false],["Clients","#7a7167",false],["AI Hub","#7a7167",false]].map(([label,color,active])=>(
+                    <div key={label} style={{ padding:"8px 10px", borderRadius:8, background:active?"rgba(201,168,76,.12)":"transparent", fontSize:12, color }}>{label}</div>
                   ))}
                 </div>
-                {/* Main content */}
                 <div style={{ background:"#0f0e0d", padding:16 }}>
                   <div style={{ fontSize:14, color:"var(--cream)", marginBottom:12, fontFamily:"'Cormorant Garamond',serif" }}>Good morning ✨</div>
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:12 }}>
-                    {[["Today","5","appts"],["Revenue","€890","this month"],["Clients","47","total"],["AI msgs","12","sent"]].map(([label,val,sub])=>(
+                    {[["Today","5","appts"],["Revenue","€890","month"],["Clients","47","total"],["AI","12","sent"]].map(([label,val,sub])=>(
                       <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:10 }}>
                         <div style={{ fontSize:9, color:"var(--muted)", marginBottom:4 }}>{label}</div>
                         <div style={{ fontSize:18, fontWeight:700, color:"var(--cream)", fontFamily:"'Cormorant Garamond',serif" }}>{val}</div>
@@ -274,7 +205,7 @@ export default function LandingPage() {
                   </div>
                   <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:12 }}>
                     <div style={{ fontSize:11, color:"var(--cream)", marginBottom:8 }}>Today's Schedule</div>
-                    {[["09:00","Sofia M.","Balayage","#c9a84c"],["10:30","Ana R.","Gel Nails","#e08c5c"],["14:00","Mariana C.","Massage","#5c9be0"],["15:30","Pedro A.","Cut & Style","#c9a84c"]].map(([time,name,svc,color])=>(
+                    {[["09:00","Sofia M.","Balayage","#c9a84c"],["10:30","Ana R.","Gel Nails","#e08c5c"],["14:00","Mariana","Massage","#5c9be0"],["15:30","Pedro A.","Cut & Style","#c9a84c"]].map(([time,name,svc,color])=>(
                       <div key={time} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom:"1px solid var(--border)" }}>
                         <div style={{ fontSize:10, color:"var(--gold)", minWidth:36 }}>{time}</div>
                         <div style={{ width:3, height:24, background:color, borderRadius:2 }}/>
@@ -282,7 +213,7 @@ export default function LandingPage() {
                           <div style={{ fontSize:10, color:"var(--cream)" }}>{name}</div>
                           <div style={{ fontSize:9, color:"var(--muted)" }}>{svc}</div>
                         </div>
-                        <div style={{ fontSize:9, padding:"2px 6px", borderRadius:10, background:"rgba(76,175,125,.15)", color:"var(--green)" }}>confirmed</div>
+                        <div style={{ fontSize:9, padding:"2px 6px", borderRadius:10, background:"rgba(76,175,125,.15)", color:"var(--green)" }}>✓</div>
                       </div>
                     ))}
                   </div>
@@ -300,22 +231,17 @@ export default function LandingPage() {
             <h2 style={{ fontSize:42, color:"var(--cream)", marginBottom:12 }}>Sound familiar?</h2>
             <p style={{ color:"var(--muted)", fontSize:16 }}>Most salons are still running on chaos. SalonPro fixes all of it.</p>
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20 }}>
+          <div className="grid-3">
             {[
-              { icon:"pain1", problem:"Writing bookings on paper and losing them", fix:"Digital calendar with all bookings, synced instantly" },
-              { icon:"pain2", problem:"Clients forget appointments, causing no-shows", fix:"Automatic WhatsApp reminders sent 24h before" },
-              { icon:"pain3", problem:"Forgetting to follow up with clients after visits", fix:"AI writes and sends personalised follow-ups automatically" },
-              { icon:"phone", problem:"Missing calls while working on a client", fix:"AI answers calls and books appointments automatically" },
-              { icon:"stats", problem:"No idea which services make the most money", fix:"Real-time analytics show revenue by service and staff" },
-              { icon:"clients", problem:"Client notes scattered across notebooks and phones", fix:"Full client profiles with history, preferences, and spending" },
-            ].map(({ icon, problem, fix }) => (
+              { problem:"Writing bookings on paper and losing them", fix:"Digital calendar with all bookings, synced instantly" },
+              { problem:"Clients forget appointments, causing no-shows", fix:"Automatic WhatsApp reminders sent 24h before" },
+              { problem:"Forgetting to follow up with clients after visits", fix:"AI writes and sends personalised follow-ups automatically" },
+              { problem:"Missing calls while working on a client", fix:"AI answers calls and books appointments automatically" },
+              { problem:"No idea which services make the most money", fix:"Real-time analytics show revenue by service and staff" },
+              { problem:"Client notes scattered across notebooks and phones", fix:"Full client profiles with history, preferences, and spending" },
+            ].map(({ problem, fix }) => (
               <div key={problem} className="feature-card">
-                <div style={{ display:"flex", gap:10, marginBottom:12 }}>
-                  <div style={{ width:36, height:36, borderRadius:10, background:"rgba(224,92,92,.1)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                    <Icon name={icon} size={18} color="var(--red)"/>
-                  </div>
-                  <p style={{ fontSize:13, color:"var(--muted)", lineHeight:1.5, paddingTop:4 }}>"{problem}"</p>
-                </div>
+                <p style={{ fontSize:13, color:"var(--muted)", lineHeight:1.5, marginBottom:12, fontStyle:"italic" }}>"{problem}"</p>
                 <div style={{ borderTop:"1px solid var(--border)", paddingTop:12, display:"flex", gap:8 }}>
                   <div style={{ width:18, height:18, borderRadius:"50%", background:"rgba(76,175,125,.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1 }}>
                     <Icon name="check" size={11} color="var(--green)"/>
@@ -336,8 +262,7 @@ export default function LandingPage() {
             <h2 style={{ fontSize:48, color:"var(--cream)", marginBottom:16 }}>One app.<br/>Every thing your salon needs.</h2>
             <p style={{ color:"var(--muted)", fontSize:16, maxWidth:480, margin:"0 auto" }}>Built specifically for hair salons, nail studios, massage centres, and beauty clinics.</p>
           </div>
-
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20 }}>
+          <div className="grid-3">
             {[
               { icon:"calendar", color:"var(--gold)", title:"Smart Calendar", desc:"Weekly view with time slots, staff assignment, and instant booking. Click any slot to add an appointment in seconds." },
               { icon:"ai", color:"#9b8ec4", title:"AI Hub", desc:"Powered by Claude AI. Generates personalised follow-up messages, upsell campaigns, and win-back messages for each client." },
@@ -365,13 +290,13 @@ export default function LandingPage() {
             <h2 style={{ fontSize:42, color:"var(--cream)", marginBottom:12 }}>Salons love SalonPro</h2>
             <p style={{ color:"var(--muted)", fontSize:16 }}>Join hundreds of salons already saving hours every week</p>
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20 }}>
+          <div className="grid-testimonials">
             {[
               { name:"Sofia Martins", role:"Owner, Studio Sofia — Lisboa", stars:5, text:"I used to spend 2 hours a day managing WhatsApp bookings. Now I spend 10 minutes. The AI follow-ups brought back 3 clients I hadn't seen in months." },
               { name:"Ana Rodrigues", role:"Nail Artist — Porto", stars:5, text:"My clients love getting the personalised messages. I thought it would feel robotic but they always reply saying how lovely it is. My rebooking rate went up 40%." },
               { name:"Carlos Silva", role:"Barbershop Owner — Coimbra", stars:5, text:"The calendar alone is worth it. No more double bookings, no more paper notebooks. My staff actually know their schedule without calling me every morning." },
             ].map(({ name, role, stars, text }) => (
-              <div key={name} className="testimonial">
+              <div key={name} style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:16, padding:24 }}>
                 <div style={{ display:"flex", gap:2, marginBottom:12 }}>
                   {Array(stars).fill(0).map((_,i) => <Icon key={i} name="star" size={16} color="var(--gold)"/>)}
                 </div>
@@ -393,7 +318,7 @@ export default function LandingPage() {
             <h2 style={{ fontSize:42, color:"var(--cream)", marginBottom:12 }}>Simple pricing</h2>
             <p style={{ color:"var(--muted)", fontSize:16 }}>14-day free trial on all plans. No credit card required.</p>
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:24, maxWidth:900, margin:"0 auto" }}>
+          <div className="pricing-grid">
             {[
               { name:"Basic", price:29, color:"var(--blue)", features:["Unlimited clients & bookings","Smart calendar","Services & pricing","Basic analytics","Email support"] },
               { name:"Pro", price:59, color:"var(--gold)", popular:true, features:["Everything in Basic","AI message generator","AI assistant chat","Automated follow-ups","WhatsApp & SMS templates","Priority support"] },
@@ -410,15 +335,15 @@ export default function LandingPage() {
                 </div>
                 <div style={{ flex:1, marginBottom:24 }}>
                   {plan.features.map(f => (
-                    <div key={f} className="check-item">
-                      <div className="check-icon"><Icon name="check" size={12} color="var(--green)"/></div>
+                    <div key={f} style={{ display:"flex", alignItems:"flex-start", gap:12, marginBottom:14 }}>
+                      <div style={{ width:20, height:20, borderRadius:"50%", background:"rgba(76,175,125,.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1 }}>
+                        <Icon name="check" size={12} color="var(--green)"/>
+                      </div>
                       <span style={{ fontSize:13, color:"var(--text)" }}>{f}</span>
                     </div>
                   ))}
                 </div>
-                <button onClick={goToApp} style={{ background:plan.popular?"linear-gradient(135deg,var(--gold),var(--gold-lt))":"transparent", border:plan.popular?"none":`1px solid ${plan.color}`, color:plan.popular?"#1a1410":plan.color, borderRadius:10, padding:"12px 20px", fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:14, cursor:"pointer", width:"100%", transition:"all .2s" }}
-                  onMouseEnter={e=>{ if(!plan.popular){e.currentTarget.style.background=`${plan.color}15`;}else{e.currentTarget.style.opacity=".9";} }}
-                  onMouseLeave={e=>{ if(!plan.popular){e.currentTarget.style.background="transparent";}else{e.currentTarget.style.opacity="1";} }}>
+                <button onClick={goToApp} style={{ background:plan.popular?"linear-gradient(135deg,var(--gold),var(--gold-lt))":"transparent", border:plan.popular?"none":`1px solid ${plan.color}`, color:plan.popular?"#1a1410":plan.color, borderRadius:10, padding:"12px 20px", fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:14, cursor:"pointer", width:"100%" }}>
                   Start Free Trial →
                 </button>
               </div>
@@ -436,9 +361,7 @@ export default function LandingPage() {
       <section style={{ background:"var(--surface)", padding:"80px 0" }}>
         <div className="container" style={{ textAlign:"center" }}>
           <div style={{ maxWidth:600, margin:"0 auto" }}>
-            <h2 style={{ fontSize:48, color:"var(--cream)", marginBottom:16, lineHeight:1.1 }}>
-              Ready to transform<br/>your salon?
-            </h2>
+            <h2 style={{ fontSize:48, color:"var(--cream)", marginBottom:16, lineHeight:1.1 }}>Ready to transform<br/>your salon?</h2>
             <p style={{ fontSize:16, color:"var(--muted)", marginBottom:40, lineHeight:1.6 }}>
               Join salons across Europe that use SalonPro to save time, reduce no-shows, and grow their revenue with AI.
             </p>
@@ -452,20 +375,20 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer style={{ borderTop:"1px solid var(--border)", padding:"40px 0" }}>
-        <div className="container" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:28, height:28, borderRadius:8, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <Icon name="star" size={14} color="#1a1410"/>
+        <div className="container">
+          <div className="footer-grid">
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <div style={{ width:28, height:28, borderRadius:8, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <Icon name="star" size={14} color="#1a1410"/>
+              </div>
+              <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:700, color:"var(--cream)" }}>SalonPro</span>
             </div>
-            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:700, color:"var(--cream)" }}>SalonPro</span>
-          </div>
-          <div style={{ fontSize:13, color:"var(--muted)" }}>© 2026 SalonPro. All rights reserved.</div>
-          <div style={{ display:"flex", gap:20 }}>
-            {["Privacy","Terms","Contact"].map(l=>(
-              <a key={l} href="#" style={{ fontSize:13, color:"var(--muted)", textDecoration:"none" }}
-                onMouseEnter={e=>e.target.style.color="var(--gold)"}
-                onMouseLeave={e=>e.target.style.color="var(--muted)"}>{l}</a>
-            ))}
+            <div style={{ fontSize:13, color:"var(--muted)" }}>© 2026 SalonPro. All rights reserved.</div>
+            <div style={{ display:"flex", gap:20 }}>
+              {["Privacy","Terms","Contact"].map(l=>(
+                <a key={l} href="#" style={{ fontSize:13, color:"var(--muted)", textDecoration:"none" }}>{l}</a>
+              ))}
+            </div>
           </div>
         </div>
       </footer>
