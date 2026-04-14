@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useUser, useClerk, SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
 import LandingPage from './LandingPage.jsx'
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 const supabase = createClient(
   "https://tfutvrhuhaeremicicwp.supabase.co",
@@ -64,16 +65,7 @@ const GlobalStyle = () => (
     @keyframes spin { to{transform:rotate(360deg)} }
     .spin { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
-  `}
-@media (max-width: 768px) {
-      main { padding: 16px !important; }
-      aside { width: 100% !important; flex-direction: row !important; overflow-x: auto !important; min-height: auto !important; flex-shrink: 0 !important; }
-      div[style*="display:\"flex\""][style*="height:\"100vh\""] { flex-direction: column !important; }
-      div[style*="gridTemplateColumns:\"repeat(4"] { grid-template-columns: repeat(2,1fr) !important; }
-      div[style*="gridTemplateColumns:\"1fr 1fr\""] { grid-template-columns: 1fr !important; }
-      div[style*="gridTemplateColumns:\"repeat(3"] { grid-template-columns: 1fr !important; }
-      div[style*="width: 320"] { width: 100% !important; }
-    }</style>
+  `}</style>
 );
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -91,7 +83,6 @@ function weekDays(base) {
   mon.setDate(base.getDate() - ((base.getDay() + 6) % 7));
   return Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(mon.getDate()+i); return d; });
 }
-const isMobile = window.innerWidth < 768;
 const STAFF = ["Lucia", "Rita", "João", "Marta"];
 const CAT_COLORS = { Hair:"#c9a84c", Nails:"#e08c5c", Massage:"#5c9be0", Beauty:"#9b8ec4", Other:"#4caf7d" };
 
@@ -124,7 +115,7 @@ const Icon = ({ name, size=16, color="currentColor" }) => {
 };
 
 // ─── Paywall Screen ───────────────────────────────────────────────────────────
-const PaywallScreen = ({ user, onPay }) => {
+const PaywallScreen = ({ user }) => {
   const [loading, setLoading] = useState(null);
   const { signOut } = useClerk();
 
@@ -163,15 +154,12 @@ const PaywallScreen = ({ user, onPay }) => {
           </div>
           <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:700, color:"var(--cream)" }}>SalonPro</div>
         </div>
-        <h1 style={{ fontSize:40, color:"var(--cream)", lineHeight:1.2, marginBottom:12 }}>
-          Your free trial has ended
-        </h1>
+        <h1 style={{ fontSize:40, color:"var(--cream)", lineHeight:1.2, marginBottom:12 }}>Your free trial has ended</h1>
         <p style={{ fontSize:16, color:"var(--muted)", maxWidth:480, margin:"0 auto 8px" }}>
           Choose a plan to continue using SalonPro. Your data is safe and waiting for you.
         </p>
         <p style={{ fontSize:13, color:"var(--muted)" }}>Logged in as <strong style={{ color:"var(--gold)" }}>{user?.emailAddresses?.[0]?.emailAddress}</strong></p>
       </div>
-
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, maxWidth:900, width:"100%" }}>
         {plans.map(plan => (
           <div key={plan.id} className="fade-up" style={{ background:"var(--surface)", border:`1px solid ${plan.popular?"var(--gold)":"var(--border)"}`, borderRadius:20, padding:28, display:"flex", flexDirection:"column", position:"relative", boxShadow:plan.popular?"0 0 40px rgba(201,168,76,.15)":"none" }}>
@@ -200,13 +188,11 @@ const PaywallScreen = ({ user, onPay }) => {
           </div>
         ))}
       </div>
-
       <div style={{ marginTop:32, display:"flex", gap:24, flexWrap:"wrap", justifyContent:"center" }}>
         {["🔒 Secure payments via Stripe","🔄 Cancel anytime","💾 Your data is safe"].map(b=>(
           <div key={b} style={{ fontSize:13, color:"var(--muted)" }}>{b}</div>
         ))}
       </div>
-
       <button onClick={()=>signOut()} style={{ marginTop:24, background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
         Sign out
       </button>
@@ -279,7 +265,7 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:12 }}>
         <div>
           <h2 style={{ fontSize:28, color:"var(--cream)" }}>Good morning ✨</h2>
           <p style={{ color:"var(--muted)", marginTop:4 }}>Here's what's happening at <strong style={{ color:"var(--gold)" }}>{salonName}</strong> today</p>
@@ -387,55 +373,59 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
         <h2 style={{ fontSize:24, color:"var(--cream)" }}>Calendar</h2>
-        <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+        <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
           <button className="ghost-btn" onClick={()=>{const d=new Date(weekBase);d.setDate(d.getDate()-7);setWeekBase(d);}}>← Prev</button>
-          <span style={{ fontSize:14, color:"var(--muted)", minWidth:150, textAlign:"center" }}>{days[0].toLocaleDateString("en",{month:"short",day:"numeric"})} – {days[6].toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"})}</span>
+          <span style={{ fontSize:13, color:"var(--muted)" }}>{days[0].toLocaleDateString("en",{month:"short",day:"numeric"})} – {days[6].toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"})}</span>
           <button className="ghost-btn" onClick={()=>{const d=new Date(weekBase);d.setDate(d.getDate()+7);setWeekBase(d);}}>Next →</button>
           <button className="ghost-btn" onClick={()=>setWeekBase(new Date(today))}>Today</button>
         </div>
       </div>
       <div className="card" style={{ padding:0, overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"64px repeat(7,1fr)", borderBottom:"1px solid var(--border)" }}>
-          <div style={{ padding:"12px 8px", borderRight:"1px solid var(--border)" }}/>
-          {days.map((d,i)=>{
-            const isToday=fmt(d)===todayStr;
-            return <div key={i} style={{ padding:"12px 8px", textAlign:"center", borderRight:i<6?"1px solid var(--border)":"none", background:isToday?"rgba(201,168,76,.07)":"transparent" }}>
-              <div style={{ fontSize:11, color:"var(--muted)", marginBottom:2 }}>{DAY_NAMES[i]}</div>
-              <div style={{ fontSize:16, fontFamily:"'Cormorant Garamond',serif", fontWeight:600, color:isToday?"var(--gold)":"var(--cream)" }}>{d.getDate()}</div>
-            </div>;
-          })}
-        </div>
-        <div style={{ maxHeight:520, overflowY:"auto" }}>
-          {timeSlots.map(slot=>(
-            <div key={slot} style={{ display:"grid", gridTemplateColumns:"64px repeat(7,1fr)", borderBottom:"1px solid var(--border)", minHeight:52 }}>
-              <div style={{ padding:"4px 8px", fontSize:11, color:"var(--muted)", borderRight:"1px solid var(--border)", paddingTop:6, textAlign:"right" }}>{slot}</div>
-              {days.map((d,di)=>{
-                const dayBks=bookings.filter(b=>b.date===fmt(d)&&b.time===slot);
+        <div style={{ overflowX:"auto" }}>
+          <div style={{ minWidth:600 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"64px repeat(7,1fr)", borderBottom:"1px solid var(--border)" }}>
+              <div style={{ padding:"12px 8px", borderRight:"1px solid var(--border)" }}/>
+              {days.map((d,i)=>{
                 const isToday=fmt(d)===todayStr;
-                return <div key={di} onClick={()=>{setSelectedSlot({date:fmt(d),time:slot});setForm({clientId:"",serviceId:"",staff:STAFF[0],notes:""});setShowModal(true);}}
-                  style={{ borderRight:di<6?"1px solid var(--border)":"none", padding:"3px 4px", cursor:"pointer", background:isToday?"rgba(201,168,76,.03)":"transparent" }}
-                  onMouseEnter={e=>e.currentTarget.style.background="rgba(201,168,76,.08)"}
-                  onMouseLeave={e=>e.currentTarget.style.background=isToday?"rgba(201,168,76,.03)":"transparent"}>
-                  {dayBks.map(b=>{
-                    const client=clients.find(c=>c.id===b.client_id);
-                    const svc=services.find(s=>s.id===b.service_id);
-                    return <div key={b.id} onClick={e=>e.stopPropagation()} style={{ background:svc?.color?`${svc.color}33`:"rgba(201,168,76,.2)", border:`1px solid ${svc?.color||"var(--gold)"}66`, borderRadius:6, padding:"3px 6px", marginBottom:2, fontSize:11 }}>
-                      <div style={{ fontWeight:600, color:svc?.color||"var(--gold)" }}>{client?.name}</div>
-                      <div style={{ color:"var(--muted)" }}>{svc?.name}</div>
-                      <button onClick={()=>deleteBooking(b.id)} style={{ background:"none", border:"none", color:"var(--red)", cursor:"pointer", fontSize:10, padding:0 }}>✕</button>
-                    </div>;
-                  })}
+                return <div key={i} style={{ padding:"12px 8px", textAlign:"center", borderRight:i<6?"1px solid var(--border)":"none", background:isToday?"rgba(201,168,76,.07)":"transparent" }}>
+                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:2 }}>{DAY_NAMES[i]}</div>
+                  <div style={{ fontSize:16, fontFamily:"'Cormorant Garamond',serif", fontWeight:600, color:isToday?"var(--gold)":"var(--cream)" }}>{d.getDate()}</div>
                 </div>;
               })}
             </div>
-          ))}
+            <div style={{ maxHeight:520, overflowY:"auto" }}>
+              {timeSlots.map(slot=>(
+                <div key={slot} style={{ display:"grid", gridTemplateColumns:"64px repeat(7,1fr)", borderBottom:"1px solid var(--border)", minHeight:52 }}>
+                  <div style={{ padding:"4px 8px", fontSize:11, color:"var(--muted)", borderRight:"1px solid var(--border)", paddingTop:6, textAlign:"right" }}>{slot}</div>
+                  {days.map((d,di)=>{
+                    const dayBks=bookings.filter(b=>b.date===fmt(d)&&b.time===slot);
+                    const isToday=fmt(d)===todayStr;
+                    return <div key={di} onClick={()=>{setSelectedSlot({date:fmt(d),time:slot});setForm({clientId:"",serviceId:"",staff:STAFF[0],notes:""});setShowModal(true);}}
+                      style={{ borderRight:di<6?"1px solid var(--border)":"none", padding:"3px 4px", cursor:"pointer", background:isToday?"rgba(201,168,76,.03)":"transparent" }}
+                      onMouseEnter={e=>e.currentTarget.style.background="rgba(201,168,76,.08)"}
+                      onMouseLeave={e=>e.currentTarget.style.background=isToday?"rgba(201,168,76,.03)":"transparent"}>
+                      {dayBks.map(b=>{
+                        const client=clients.find(c=>c.id===b.client_id);
+                        const svc=services.find(s=>s.id===b.service_id);
+                        return <div key={b.id} onClick={e=>e.stopPropagation()} style={{ background:svc?.color?`${svc.color}33`:"rgba(201,168,76,.2)", border:`1px solid ${svc?.color||"var(--gold)"}66`, borderRadius:6, padding:"3px 6px", marginBottom:2, fontSize:11 }}>
+                          <div style={{ fontWeight:600, color:svc?.color||"var(--gold)" }}>{client?.name}</div>
+                          <div style={{ color:"var(--muted)" }}>{svc?.name}</div>
+                          <button onClick={()=>deleteBooking(b.id)} style={{ background:"none", border:"none", color:"var(--red)", cursor:"pointer", fontSize:10, padding:0 }}>✕</button>
+                        </div>;
+                      })}
+                    </div>;
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
       {showModal&&(
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 }} onClick={()=>setShowModal(false)}>
-          <div className="card fade-up" style={{ width:420, padding:28 }} onClick={e=>e.stopPropagation()}>
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100, padding:16 }} onClick={()=>setShowModal(false)}>
+          <div className="card fade-up" style={{ width:"100%", maxWidth:420, padding:28 }} onClick={e=>e.stopPropagation()}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
               <h3 style={{ fontSize:20, color:"var(--cream)" }}>New Booking</h3>
               <button className="ghost-btn" style={{ padding:"4px 10px" }} onClick={()=>setShowModal(false)}>✕</button>
@@ -492,7 +482,7 @@ const Clients = ({ clients, setClients, bookings, services }) => {
 
   return (
     <div style={{ display:"flex", gap:20, height:"calc(100vh - 120px)" }}>
-      <div style={{ width:320, display:"flex", flexDirection:"column", gap:12 }}>
+      <div style={{ width:300, display:"flex", flexDirection:"column", gap:12, flexShrink:0 }}>
         <div style={{ display:"flex", gap:8 }}>
           <input style={{ flex:1 }} placeholder="Search clients…" value={search} onChange={e=>setSearch(e.target.value)}/>
           <button className="gold-btn" onClick={()=>setShowAdd(true)}>+ Add</button>
@@ -514,10 +504,10 @@ const Clients = ({ clients, setClients, bookings, services }) => {
       </div>
       {selected?(
         <div style={{ flex:1, display:"flex", flexDirection:"column", gap:16, overflowY:"auto" }}>
-          <div className="card" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+          <div className="card" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12 }}>
             <div>
               <h2 style={{ fontSize:26, color:"var(--cream)" }}>{selected.name}</h2>
-              <div style={{ display:"flex", gap:16, marginTop:8, fontSize:14, color:"var(--muted)" }}><span>📧 {selected.email||"—"}</span><span>📞 {selected.phone||"—"}</span></div>
+              <div style={{ display:"flex", gap:16, marginTop:8, fontSize:14, color:"var(--muted)", flexWrap:"wrap" }}><span>📧 {selected.email||"—"}</span><span>📞 {selected.phone||"—"}</span></div>
               {selected.notes&&<p style={{ marginTop:10, fontSize:13, color:"var(--muted)", fontStyle:"italic" }}>"{selected.notes}"</p>}
             </div>
             <button className="ghost-btn" style={{ color:"var(--red)", borderColor:"var(--red)" }} onClick={()=>deleteClient(selected.id)}>Delete</button>
@@ -544,8 +534,8 @@ const Clients = ({ clients, setClients, bookings, services }) => {
         </div>
       ):<div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", color:"var(--muted)" }}>Select a client to view details</div>}
       {showAdd&&(
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 }} onClick={()=>setShowAdd(false)}>
-          <div className="card fade-up" style={{ width:400, padding:28 }} onClick={e=>e.stopPropagation()}>
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100, padding:16 }} onClick={()=>setShowAdd(false)}>
+          <div className="card fade-up" style={{ width:"100%", maxWidth:400, padding:28 }} onClick={e=>e.stopPropagation()}>
             <h3 style={{ fontSize:20, color:"var(--cream)", marginBottom:20 }}>New Client</h3>
             <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
               {[["Name","name","Full name"],["Phone","phone","+351 9xx xxx xxx"],["Email","email","email@example.com"]].map(([label,key,ph])=>(
@@ -596,7 +586,7 @@ const ServicesView = ({ services, setServices }) => {
       {CATS.map(cat=>grouped[cat].length>0&&(
         <div key={cat} className="card fade-up">
           <h3 style={{ fontSize:18, marginBottom:14, color:CAT_COLORS[cat]||"var(--gold)" }}>{cat}</h3>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:12 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))", gap:12 }}>
             {grouped[cat].map(s=>(
               <div key={s.id} style={{ background:"var(--surface2)", borderRadius:12, padding:16, borderTop:`3px solid ${s.color}`, position:"relative" }}>
                 <button onClick={()=>deleteService(s.id)} style={{ position:"absolute", top:8, right:8, background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:14 }}>✕</button>
@@ -609,8 +599,8 @@ const ServicesView = ({ services, setServices }) => {
         </div>
       ))}
       {showAdd&&(
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 }} onClick={()=>setShowAdd(false)}>
-          <div className="card fade-up" style={{ width:400, padding:28 }} onClick={e=>e.stopPropagation()}>
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100, padding:16 }} onClick={()=>setShowAdd(false)}>
+          <div className="card fade-up" style={{ width:"100%", maxWidth:400, padding:28 }} onClick={e=>e.stopPropagation()}>
             <h3 style={{ fontSize:20, color:"var(--cream)", marginBottom:20 }}>Add Service</h3>
             <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
               <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Category</label>
@@ -680,7 +670,7 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12 }}>
         <div><h2 style={{ fontSize:24, color:"var(--cream)" }}>AI Hub</h2><p style={{ color:"var(--muted)", fontSize:13, marginTop:2 }}>Powered by Claude</p></div>
         <div style={{ display:"flex", padding:4, background:"var(--surface2)", borderRadius:10, gap:2 }}>
           {[["msg","Message Generator","mail"],["chat","AI Assistant","bot"]].map(([id,label,icon])=>(
@@ -773,7 +763,7 @@ const SalonApp = ({ userData }) => {
     loadData();
   },[]);
 
-  if (!isActive) return <PaywallScreen user={user} onPay={()=>{}}/>;
+  if (!isActive) return <PaywallScreen user={user}/>;
 
   const NAV=[
     { id:"dashboard", label:"Dashboard", icon:"dashboard" },
@@ -848,7 +838,7 @@ const SalonApp = ({ userData }) => {
           </button>
         </div>
       </aside>
-      <main style={{ flex:1, overflowY:"auto", padding:"28px 28px" }}>
+      <main style={{ flex:1, overflowY:"auto", padding:"28px" }}>
         {page==="dashboard"&&<Dashboard bookings={bookings} clients={clients} services={services} salonName={salonName}/>}
         {page==="calendar" &&<CalendarView bookings={bookings} setBookings={setBookings} clients={clients} services={services}/>}
         {page==="clients"  &&<Clients clients={clients} setClients={setClients} bookings={bookings} services={services}/>}
@@ -859,7 +849,7 @@ const SalonApp = ({ userData }) => {
   );
 };
 
-// ─── App Gate — checks trial/subscription ────────────────────────────────────
+// ─── App Gate ─────────────────────────────────────────────────────────────────
 const AppGate = () => {
   const { user } = useUser();
   const [userData, setUserData] = useState(null);
@@ -869,17 +859,12 @@ const AppGate = () => {
     if (!user) return;
     const initUser = async () => {
       const email = user.emailAddresses?.[0]?.emailAddress;
-      // Check if user exists
       const { data: existing } = await supabase.from("users").select("*").eq("id", user.id).single();
       if (existing) {
         setUserData(existing);
       } else {
-        // New user — create trial record
         const { data: newUser } = await supabase.from("users").insert([{
-          id: user.id,
-          email: email,
-          plan: "trial",
-          subscription_status: "trialing",
+          id: user.id, email: email, plan: "trial", subscription_status: "trialing",
         }]).select().single();
         setUserData(newUser);
       }
