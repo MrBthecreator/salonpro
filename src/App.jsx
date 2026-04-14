@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useUser, useClerk, SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
-
+import LandingPage from './LandingPage.jsx'
 // ─── Config ───────────────────────────────────────────────────────────────────
 const supabase = createClient(
   "https://tfutvrhuhaeremicicwp.supabase.co",
@@ -892,6 +892,11 @@ const AppGate = () => {
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function App() {
+  const params = new URLSearchParams(window.location.search);
+  const isApp = params.has('app') || localStorage.getItem('salonpro_user');
+
+  if (!isApp) return <LandingPage />;
+
   return (
     <>
       <GlobalStyle/>
