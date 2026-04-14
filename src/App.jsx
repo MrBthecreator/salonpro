@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { loadStripe } from "@stripe/stripe-js";
-import {
-  SignIn, SignUp, useUser, useClerk,
-  SignedIn, SignedOut
-} from "@clerk/clerk-react";
+import { useUser, useClerk, SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const supabase = createClient(
@@ -12,7 +8,13 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmdXR2cmh1aGFlcmVtaWNpY3dwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMDM2ODksImV4cCI6MjA5MTY3OTY4OX0._Y-3fAa10LQE7OXkPaWK6lUurSCtH0NMl1WfnuYhHeA"
 );
 
-const stripePromise = loadStripe("pk_test_51TMAIi05DLhFoice05zgmllESgarimRbIxTJmt2XpUC8zb55bz8pv6v8qsV1khSs3SC0NAbhwHwnBp2l7B13lV3a00SLm3RFey");
+const PRICE_IDS = {
+  basic:   "price_1TMAkX05DLhFoiceVqXkcgXF",
+  pro:     "price_1TMAl605DLhFoiceAxKEDRfr",
+  premium: "price_1TMAld05DLhFoiceTUU31z77",
+};
+
+const TRIAL_DAYS = 14;
 
 // ─── Global styles ────────────────────────────────────────────────────────────
 const GlobalStyle = () => (
@@ -62,13 +64,12 @@ const GlobalStyle = () => (
     @keyframes spin { to{transform:rotate(360deg)} }
     .spin { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
-    @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
   `}</style>
 );
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const currency = (n) => `€${Number(n).toFixed(2)}`;
-const today = new Date("2026-04-14");
+const today = new Date();
 const fmt = (d) => d.toISOString().split("T")[0];
 const todayStr = fmt(today);
 const timeSlots = Array.from({ length: 22 }, (_, i) => {
@@ -84,6 +85,13 @@ function weekDays(base) {
 const STAFF = ["Lucia", "Rita", "João", "Marta"];
 const CAT_COLORS = { Hair:"#c9a84c", Nails:"#e08c5c", Massage:"#5c9be0", Beauty:"#9b8ec4", Other:"#4caf7d" };
 
+const getDaysLeft = (trialStart) => {
+  const start = new Date(trialStart);
+  const now = new Date();
+  const diff = Math.ceil((start.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000 - now.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.max(0, diff);
+};
+
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const Icon = ({ name, size=16, color="currentColor" }) => {
   const paths = {
@@ -92,7 +100,6 @@ const Icon = ({ name, size=16, color="currentColor" }) => {
     clients:   "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
     services:  "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",
     stats:     "M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z",
-    settings:  "M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z",
     sparkle:   "M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zm-6 14l.75 2.25L9 20l-2.25.75L6 23l-.75-2.25L3 20l2.25-.75L6 17zm10 0l.75 2.25L19 20l-2.25.75L16 23l-.75-2.25L13 20l2.25-.75L16 17z",
     star:      "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
     send:      "M2.01 21L23 12 2.01 3 2 10l15 2-15 2z",
@@ -101,174 +108,106 @@ const Icon = ({ name, size=16, color="currentColor" }) => {
     mail:      "M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z",
     logout:    "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
     check:     "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
-    crown:     "M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z",
+    lock:      "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z",
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ flexShrink:0 }}><path d={paths[name]||paths.star}/></svg>;
 };
 
-// ─── Pricing Page ─────────────────────────────────────────────────────────────
-const PricingPage = ({ onSelectPlan }) => {
+// ─── Paywall Screen ───────────────────────────────────────────────────────────
+const PaywallScreen = ({ user, onPay }) => {
   const [loading, setLoading] = useState(null);
+  const { signOut } = useClerk();
 
   const plans = [
-    {
-      id: "basic",
-      name: "Basic",
-      price: 29,
-      color: "var(--blue)",
-      description: "Perfect for small salons just getting started",
-      features: [
-        "Unlimited clients & bookings",
-        "Weekly calendar view",
-        "Services & pricing management",
-        "Basic analytics",
-        "Email support",
-      ],
-      cta: "Start Free Trial",
-    },
-    {
-      id: "pro",
-      name: "Pro",
-      price: 59,
-      color: "var(--gold)",
-      popular: true,
-      description: "Most popular — everything you need to grow",
-      features: [
-        "Everything in Basic",
-        "AI-powered message generator",
-        "AI assistant chat",
-        "Automated follow-ups",
-        "WhatsApp & SMS templates",
-        "Advanced analytics",
-        "Priority support",
-      ],
-      cta: "Start Free Trial",
-    },
-    {
-      id: "premium",
-      name: "Premium",
-      price: 99,
-      color: "#9b8ec4",
-      description: "For established salons that want full automation",
-      features: [
-        "Everything in Pro",
-        "Real SMS & WhatsApp sending",
-        "Automated booking reminders",
-        "Website AI chat widget",
-        "Custom domain",
-        "Multi-staff management",
-        "Dedicated support",
-      ],
-      cta: "Start Free Trial",
-    },
+    { id:"basic", name:"Basic", price:29, color:"var(--blue)", priceId: PRICE_IDS.basic,
+      features:["Unlimited clients & bookings","Weekly calendar view","Services & pricing","Basic analytics","Email support"] },
+    { id:"pro", name:"Pro", price:59, color:"var(--gold)", priceId: PRICE_IDS.pro, popular:true,
+      features:["Everything in Basic","AI message generator","AI assistant chat","Automated follow-ups","WhatsApp & SMS templates","Priority support"] },
+    { id:"premium", name:"Premium", price:99, color:"#9b8ec4", priceId: PRICE_IDS.premium,
+      features:["Everything in Pro","Real SMS & WhatsApp","Booking reminders","Website AI chat widget","Custom domain","Dedicated support"] },
   ];
 
-  const handlePlan = async (plan) => {
+  const handlePay = async (plan) => {
     setLoading(plan.id);
-    // Simulate Stripe checkout (in production this calls your backend)
-    await new Promise(r => setTimeout(r, 1500));
-    onSelectPlan(plan);
+    try {
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId: plan.priceId, email: user?.emailAddresses?.[0]?.emailAddress })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert("Error creating checkout. Please try again.");
+    } catch (e) {
+      alert("Connection error. Please try again.");
+    }
     setLoading(null);
   };
 
   return (
     <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", padding:"60px 20px" }}>
-      {/* Header */}
-      <div style={{ textAlign:"center", marginBottom:60 }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, marginBottom:24 }}>
+      <div style={{ textAlign:"center", marginBottom:48 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, marginBottom:20 }}>
           <div style={{ width:44, height:44, borderRadius:12, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            <Icon name="star" size={22} color="#1a1410"/>
+            <Icon name="lock" size={22} color="#1a1410"/>
           </div>
           <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:700, color:"var(--cream)" }}>SalonPro</div>
         </div>
-        <h1 style={{ fontSize:48, color:"var(--cream)", lineHeight:1.1, marginBottom:16 }}>
-          Simple, transparent<br/>
-          <span style={{ background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>pricing</span>
+        <h1 style={{ fontSize:40, color:"var(--cream)", lineHeight:1.2, marginBottom:12 }}>
+          Your free trial has ended
         </h1>
-        <p style={{ fontSize:16, color:"var(--muted)", maxWidth:480, margin:"0 auto" }}>
-          14-day free trial on all plans. No credit card required to start.
-          Cancel anytime.
+        <p style={{ fontSize:16, color:"var(--muted)", maxWidth:480, margin:"0 auto 8px" }}>
+          Choose a plan to continue using SalonPro. Your data is safe and waiting for you.
         </p>
+        <p style={{ fontSize:13, color:"var(--muted)" }}>Logged in as <strong style={{ color:"var(--gold)" }}>{user?.emailAddresses?.[0]?.emailAddress}</strong></p>
       </div>
 
-      {/* Plans */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:24, maxWidth:960, width:"100%" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, maxWidth:900, width:"100%" }}>
         {plans.map(plan => (
-          <div key={plan.id} className="fade-up" style={{ background:"var(--surface)", border:`1px solid ${plan.popular?"var(--gold)":"var(--border)"}`, borderRadius:20, padding:32, display:"flex", flexDirection:"column", position:"relative", boxShadow:plan.popular?"0 0 40px rgba(201,168,76,.15)":"none" }}>
-            {plan.popular && (
-              <div style={{ position:"absolute", top:-14, left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", color:"#1a1410", padding:"4px 16px", borderRadius:20, fontSize:12, fontWeight:700, whiteSpace:"nowrap" }}>
-                ✦ Most Popular
+          <div key={plan.id} className="fade-up" style={{ background:"var(--surface)", border:`1px solid ${plan.popular?"var(--gold)":"var(--border)"}`, borderRadius:20, padding:28, display:"flex", flexDirection:"column", position:"relative", boxShadow:plan.popular?"0 0 40px rgba(201,168,76,.15)":"none" }}>
+            {plan.popular && <div style={{ position:"absolute", top:-14, left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", color:"#1a1410", padding:"4px 16px", borderRadius:20, fontSize:12, fontWeight:700, whiteSpace:"nowrap" }}>✦ Most Popular</div>}
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontSize:12, fontWeight:600, color:plan.color, marginBottom:6, textTransform:"uppercase", letterSpacing:".1em" }}>{plan.name}</div>
+              <div style={{ display:"flex", alignItems:"flex-end", gap:4, marginBottom:6 }}>
+                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:44, fontWeight:700, color:"var(--cream)", lineHeight:1 }}>€{plan.price}</span>
+                <span style={{ fontSize:13, color:"var(--muted)", marginBottom:6 }}>/month</span>
               </div>
-            )}
-            <div style={{ marginBottom:24 }}>
-              <div style={{ fontSize:13, fontWeight:600, color:plan.color, marginBottom:8, textTransform:"uppercase", letterSpacing:".1em" }}>{plan.name}</div>
-              <div style={{ display:"flex", alignItems:"flex-end", gap:4, marginBottom:8 }}>
-                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:52, fontWeight:700, color:"var(--cream)", lineHeight:1 }}>€{plan.price}</span>
-                <span style={{ fontSize:14, color:"var(--muted)", marginBottom:8 }}>/month</span>
-              </div>
-              <p style={{ fontSize:13, color:"var(--muted)", lineHeight:1.5 }}>{plan.description}</p>
             </div>
-
-            <div style={{ flex:1, display:"flex", flexDirection:"column", gap:10, marginBottom:28 }}>
-              {plan.features.map(f => (
-                <div key={f} style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
-                  <div style={{ width:18, height:18, borderRadius:"50%", background:`${plan.color}22`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1 }}>
-                    <Icon name="check" size={11} color={plan.color}/>
+            <div style={{ flex:1, display:"flex", flexDirection:"column", gap:8, marginBottom:20 }}>
+              {plan.features.map(f=>(
+                <div key={f} style={{ display:"flex", alignItems:"flex-start", gap:8 }}>
+                  <div style={{ width:16, height:16, borderRadius:"50%", background:`${plan.color}22`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1 }}>
+                    <Icon name="check" size={10} color={plan.color}/>
                   </div>
-                  <span style={{ fontSize:13, color:"var(--text)", lineHeight:1.4 }}>{f}</span>
+                  <span style={{ fontSize:13, color:"var(--text)" }}>{f}</span>
                 </div>
               ))}
             </div>
-
-            <button
-              onClick={() => handlePlan(plan)}
-              disabled={loading === plan.id}
-              style={{
-                background: plan.popular ? "linear-gradient(135deg,var(--gold),var(--gold-lt))" : "transparent",
-                border: plan.popular ? "none" : `1px solid ${plan.color}`,
-                color: plan.popular ? "#1a1410" : plan.color,
-                borderRadius:10, padding:"12px 20px",
-                fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:14,
-                cursor: loading===plan.id ? "not-allowed" : "pointer",
-                opacity: loading===plan.id ? .7 : 1,
-                transition:"all .2s",
-              }}
-            >
-              {loading===plan.id ? <><span className="spin" style={{ marginRight:6 }}>◌</span>Processing…</> : plan.cta}
+            <button onClick={()=>handlePay(plan)} disabled={loading===plan.id}
+              style={{ background:plan.popular?"linear-gradient(135deg,var(--gold),var(--gold-lt))":"transparent", border:plan.popular?"none":`1px solid ${plan.color}`, color:plan.popular?"#1a1410":plan.color, borderRadius:10, padding:"11px 20px", fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:14, cursor:loading===plan.id?"not-allowed":"pointer", opacity:loading===plan.id?.7:1 }}>
+              {loading===plan.id?<><span className="spin" style={{ marginRight:6 }}>◌</span>Redirecting…</>:"Subscribe Now →"}
             </button>
           </div>
         ))}
       </div>
 
-      {/* Trust badges */}
-      <div style={{ marginTop:48, display:"flex", gap:32, flexWrap:"wrap", justifyContent:"center" }}>
-        {["🔒 Secure payments via Stripe","💳 No credit card to start","🔄 Cancel anytime","🇪🇺 GDPR compliant"].map(badge => (
-          <div key={badge} style={{ fontSize:13, color:"var(--muted)" }}>{badge}</div>
+      <div style={{ marginTop:32, display:"flex", gap:24, flexWrap:"wrap", justifyContent:"center" }}>
+        {["🔒 Secure payments via Stripe","🔄 Cancel anytime","💾 Your data is safe"].map(b=>(
+          <div key={b} style={{ fontSize:13, color:"var(--muted)" }}>{b}</div>
         ))}
       </div>
 
-      {/* Already have account */}
-      <div style={{ marginTop:32, fontSize:13, color:"var(--muted)" }}>
-        Already have an account?{" "}
-        <button onClick={() => onSelectPlan({ id:"existing" })} style={{ background:"none", border:"none", color:"var(--gold)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
-          Sign in →
-        </button>
-      </div>
+      <button onClick={()=>signOut()} style={{ marginTop:24, background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
+        Sign out
+      </button>
     </div>
   );
 };
 
 // ─── Auth Screen ──────────────────────────────────────────────────────────────
 const AuthScreen = () => {
-  const [stage, setStage] = useState("pricing"); // pricing | signin | signup
-  const [selectedPlan, setSelectedPlan] = useState(null);
-
-  const handleSelectPlan = (plan) => {
-    setSelectedPlan(plan);
-    setStage(plan.id === "existing" ? "signin" : "signup");
-  };
-
-  const clerkAppearance = {
+  const [mode, setMode] = useState("signin");
+  const appearance = {
     elements: {
       rootBox: { width:"100%" },
       card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:18, boxShadow:"0 24px 64px rgba(0,0,0,.5)" },
@@ -283,9 +222,6 @@ const AuthScreen = () => {
       formFieldLabel: { color:"var(--muted)" },
     }
   };
-
-  if (stage === "pricing") return <PricingPage onSelectPlan={handleSelectPlan} />;
-
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"var(--bg)", padding:20 }}>
       <div style={{ marginBottom:32, textAlign:"center" }}>
@@ -293,29 +229,16 @@ const AuthScreen = () => {
           <Icon name="star" size={24} color="#1a1410"/>
         </div>
         <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:700, color:"var(--cream)" }}>SalonPro</div>
-        {selectedPlan && selectedPlan.id !== "existing" && (
-          <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:8, justifyContent:"center" }}>
-            <span className="badge badge-gold">✦ {selectedPlan.name} Plan — €{selectedPlan.price}/mo</span>
-          </div>
-        )}
+        <div style={{ fontSize:13, color:"var(--muted)", marginTop:6 }}>✨ 14-day free trial · No credit card required</div>
       </div>
       <div style={{ width:"100%", maxWidth:420 }}>
-        {stage === "signup" ? (
-          <SignUp appearance={clerkAppearance} />
-        ) : (
-          <SignIn appearance={clerkAppearance} />
-        )}
+        {mode==="signin" ? <SignIn appearance={appearance}/> : <SignUp appearance={appearance}/>}
         <div style={{ textAlign:"center", marginTop:16, fontSize:13, color:"var(--muted)" }}>
-          {stage==="signup" ? "Already have an account? " : "Don't have an account? "}
-          <button onClick={()=>setStage(stage==="signup"?"signin":"signup")} style={{ background:"none", border:"none", color:"var(--gold)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
-            {stage==="signup" ? "Sign in" : "Sign up"}
+          {mode==="signin"?"Don't have an account? ":"Already have an account? "}
+          <button onClick={()=>setMode(mode==="signin"?"signup":"signin")} style={{ background:"none", border:"none", color:"var(--gold)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
+            {mode==="signin"?"Start free trial →":"Sign in"}
           </button>
         </div>
-        {stage==="signup" && (
-          <button onClick={()=>setStage("pricing")} style={{ display:"block", margin:"12px auto 0", background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:12, fontFamily:"'DM Sans',sans-serif" }}>
-            ← Back to pricing
-          </button>
-        )}
       </div>
     </div>
   );
@@ -338,7 +261,7 @@ const StatCard = ({ label, value, sub, icon, color="var(--gold)" }) => (
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 const Dashboard = ({ bookings, clients, services, salonName }) => {
   const todayBookings = bookings.filter(b=>b.date===todayStr);
-  const monthRevenue = bookings.filter(b=>b.date?.startsWith("2026-04")).reduce((s,b)=>{
+  const monthRevenue = bookings.filter(b=>b.date?.startsWith(todayStr.slice(0,7))).reduce((s,b)=>{
     const svc=services.find(sv=>sv.id===b.service_id); return s+(svc?.price||0);
   },0);
   const upcoming = [...bookings].filter(b=>b.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)).slice(0,5);
@@ -351,18 +274,18 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
           <h2 style={{ fontSize:28, color:"var(--cream)" }}>Good morning ✨</h2>
           <p style={{ color:"var(--muted)", marginTop:4 }}>Here's what's happening at <strong style={{ color:"var(--gold)" }}>{salonName}</strong> today</p>
         </div>
-        <div style={{ fontSize:13, color:"var(--muted)" }}>Tuesday, 14 April 2026</div>
+        <div style={{ fontSize:13, color:"var(--muted)" }}>{today.toLocaleDateString("en",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16 }}>
         <StatCard label="Today's Appointments" value={todayBookings.length} sub={`${todayBookings.filter(b=>b.status==="confirmed").length} confirmed`} icon="calendar"/>
-        <StatCard label="April Revenue" value={currency(monthRevenue)} sub="Live from database" icon="stats" color="var(--green)"/>
+        <StatCard label="Month Revenue" value={currency(monthRevenue)} sub="Live from database" icon="stats" color="var(--green)"/>
         <StatCard label="Total Clients" value={clients.length} sub="Saved in Supabase" icon="clients" color="var(--blue)"/>
         <StatCard label="Total Services" value={services.length} sub="Across all categories" icon="services" color="#9b8ec4"/>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
         <div className="card fade-up">
           <h3 style={{ fontSize:18, marginBottom:16, color:"var(--cream)" }}>Today's Schedule</h3>
-          {todayBookings.length===0 && <p style={{ color:"var(--muted)", fontSize:14 }}>No bookings today.</p>}
+          {todayBookings.length===0&&<p style={{ color:"var(--muted)", fontSize:14 }}>No bookings today.</p>}
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
             {todayBookings.sort((a,b)=>a.time.localeCompare(b.time)).map(b=>{
               const client=clients.find(c=>c.id===b.client_id);
@@ -380,7 +303,7 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
         </div>
         <div className="card fade-up">
           <h3 style={{ fontSize:18, marginBottom:16, color:"var(--cream)" }}>Top Services</h3>
-          {svcPopularity.length===0 && <p style={{ color:"var(--muted)", fontSize:14 }}>Add services to see stats.</p>}
+          {svcPopularity.length===0&&<p style={{ color:"var(--muted)", fontSize:14 }}>Add services to see stats.</p>}
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
             {svcPopularity.map((s,i)=>(
               <div key={s.id} style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -399,7 +322,7 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
       </div>
       <div className="card fade-up">
         <h3 style={{ fontSize:18, marginBottom:16, color:"var(--cream)" }}>Upcoming Appointments</h3>
-        {upcoming.length===0 && <p style={{ color:"var(--muted)", fontSize:14 }}>No upcoming bookings yet.</p>}
+        {upcoming.length===0&&<p style={{ color:"var(--muted)", fontSize:14 }}>No upcoming bookings yet.</p>}
         <div style={{ overflowX:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse", fontSize:14 }}>
             <thead>
@@ -811,16 +734,19 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
   );
 };
 
-// ─── Main App ─────────────────────────────────────────────────────────────────
-const SalonApp = () => {
+// ─── Main Salon App ───────────────────────────────────────────────────────────
+const SalonApp = ({ userData }) => {
   const { user } = useUser();
   const { signOut } = useClerk();
   const [page, setPage] = useState("dashboard");
   const [clients, setClients] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
-  const [salonName, setSalonName] = useState("Salon Élite");
+  const [salonName] = useState("Salon Élite");
   const [loading, setLoading] = useState(true);
+
+  const daysLeft = getDaysLeft(userData.trial_start);
+  const isActive = userData.subscription_status === "active" || daysLeft > 0;
 
   useEffect(()=>{
     const loadData = async () => {
@@ -836,6 +762,8 @@ const SalonApp = () => {
     };
     loadData();
   },[]);
+
+  if (!isActive) return <PaywallScreen user={user} onPay={()=>{}}/>;
 
   const NAV=[
     { id:"dashboard", label:"Dashboard", icon:"dashboard" },
@@ -871,7 +799,14 @@ const SalonApp = () => {
         <div style={{ padding:"12px 16px", borderBottom:"1px solid var(--border)" }}>
           <div style={{ fontSize:11, color:"var(--muted)", marginBottom:2 }}>Logged in as</div>
           <div style={{ fontWeight:600, color:"var(--gold)", fontSize:13, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user?.emailAddresses?.[0]?.emailAddress}</div>
-          <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{salonName}</div>
+          {userData.subscription_status !== "active" && (
+            <div style={{ marginTop:6, padding:"4px 8px", background:"rgba(201,168,76,.1)", borderRadius:6, fontSize:11, color:"var(--gold)" }}>
+              ⏱ {daysLeft} day{daysLeft!==1?"s":""} left in trial
+            </div>
+          )}
+          {userData.subscription_status === "active" && (
+            <div style={{ marginTop:6 }}><span className="badge badge-green">✓ Active subscription</span></div>
+          )}
         </div>
         <nav style={{ flex:1, padding:"12px 10px", display:"flex", flexDirection:"column", gap:4 }}>
           {NAV.map(item=>(
@@ -914,13 +849,54 @@ const SalonApp = () => {
   );
 };
 
+// ─── App Gate — checks trial/subscription ────────────────────────────────────
+const AppGate = () => {
+  const { user } = useUser();
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const initUser = async () => {
+      const email = user.emailAddresses?.[0]?.emailAddress;
+      // Check if user exists
+      const { data: existing } = await supabase.from("users").select("*").eq("id", user.id).single();
+      if (existing) {
+        setUserData(existing);
+      } else {
+        // New user — create trial record
+        const { data: newUser } = await supabase.from("users").insert([{
+          id: user.id,
+          email: email,
+          plan: "trial",
+          subscription_status: "trialing",
+        }]).select().single();
+        setUserData(newUser);
+      }
+      setLoading(false);
+    };
+    initUser();
+  }, [user]);
+
+  if (loading) return (
+    <div style={{ height:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
+      <div style={{ width:48, height:48, borderRadius:14, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <Icon name="star" size={24} color="#1a1410"/>
+      </div>
+      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, color:"var(--cream)" }}>Setting up your account…</div>
+    </div>
+  );
+
+  return <SalonApp userData={userData}/>;
+};
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <>
       <GlobalStyle/>
       <SignedOut><AuthScreen/></SignedOut>
-      <SignedIn><SalonApp/></SignedIn>
+      <SignedIn><AppGate/></SignedIn>
     </>
   );
 }
