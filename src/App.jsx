@@ -64,7 +64,16 @@ const GlobalStyle = () => (
     @keyframes spin { to{transform:rotate(360deg)} }
     .spin { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
-  `}</style>
+  `}
+@media (max-width: 768px) {
+      main { padding: 16px !important; }
+      aside { width: 100% !important; flex-direction: row !important; overflow-x: auto !important; min-height: auto !important; flex-shrink: 0 !important; }
+      div[style*="display:\"flex\""][style*="height:\"100vh\""] { flex-direction: column !important; }
+      div[style*="gridTemplateColumns:\"repeat(4"] { grid-template-columns: repeat(2,1fr) !important; }
+      div[style*="gridTemplateColumns:\"1fr 1fr\""] { grid-template-columns: 1fr !important; }
+      div[style*="gridTemplateColumns:\"repeat(3"] { grid-template-columns: 1fr !important; }
+      div[style*="width: 320"] { width: 100% !important; }
+    }</style>
 );
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
