@@ -91,6 +91,7 @@ function weekDays(base) {
   mon.setDate(base.getDate() - ((base.getDay() + 6) % 7));
   return Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(mon.getDate()+i); return d; });
 }
+const isMobile = window.innerWidth < 768;
 const STAFF = ["Lucia", "Rita", "João", "Marta"];
 const CAT_COLORS = { Hair:"#c9a84c", Nails:"#e08c5c", Massage:"#5c9be0", Beauty:"#9b8ec4", Other:"#4caf7d" };
 

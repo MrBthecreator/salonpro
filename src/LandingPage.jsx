@@ -128,11 +128,19 @@ const GlobalStyle = () => (
       box-shadow: 0 0 60px rgba(201,168,76,.15);
     }
 
-    @media (max-width: 768px) {
-      .hide-mobile { display: none !important; }
-      .mobile-stack { flex-direction: column !important; }
-      .mobile-full { width: 100% !important; }
-      h1 { font-size: 42px !important; }
+     @media (max-width: 768px) {
+  section { padding: 60px 0 !important; }
+  h1 { font-size: 38px !important; }
+  h2 { font-size: 30px !important; }
+  .grid-3 { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .pricing-grid { grid-template-columns: 1fr !important; max-width: 100% !important; }
+  .hero-buttons { flex-direction: column !important; align-items: stretch !important; }
+  .hero-mockup { display: none !important; }
+  .footer-inner { flex-direction: column !important; text-align: center !important; }
+  .nav-links { display: none !important; }
+  .nav-btns { display: none !important; }
+  .mobile-cta { display: flex !important; }
+}}
     }
   `}</style>
 );
