@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { loadStripe } from "@stripe/stripe-js";
 import {
   SignIn, SignUp, useUser, useClerk,
   SignedIn, SignedOut
 } from "@clerk/clerk-react";
 
-// ─── Supabase ─────────────────────────────────────────────────────────────────
+// ─── Config ───────────────────────────────────────────────────────────────────
 const supabase = createClient(
   "https://tfutvrhuhaeremicicwp.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmdXR2cmh1aGFlcmVtaWNpY3dwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMDM2ODksImV4cCI6MjA5MTY3OTY4OX0._Y-3fAa10LQE7OXkPaWK6lUurSCtH0NMl1WfnuYhHeA"
 );
+
+const stripePromise = loadStripe("pk_test_51TMAIi05DLhFoice05zgmllESgarimRbIxTJmt2XpUC8zb55bz8pv6v8qsV1khSs3SC0NAbhwHwnBp2l7B13lV3a00SLm3RFey");
 
 // ─── Global styles ────────────────────────────────────────────────────────────
 const GlobalStyle = () => (
@@ -59,26 +62,13 @@ const GlobalStyle = () => (
     @keyframes spin { to{transform:rotate(360deg)} }
     .spin { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
-
-    /* Clerk override styles */
-    .cl-rootBox { width: 100%; }
-    .cl-card { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: 18px !important; box-shadow: 0 24px 64px rgba(0,0,0,.5) !important; }
-    .cl-headerTitle { color: var(--cream) !important; font-family: 'Cormorant Garamond', serif !important; font-size: 26px !important; }
-    .cl-headerSubtitle { color: var(--muted) !important; }
-    .cl-formButtonPrimary { background: linear-gradient(135deg, var(--gold), var(--gold-lt)) !important; color: #1a1410 !important; font-weight: 600 !important; border-radius: 8px !important; }
-    .cl-formFieldInput { background: var(--surface2) !important; border-color: var(--border) !important; color: var(--text) !important; border-radius: 8px !important; }
-    .cl-footerActionLink { color: var(--gold) !important; }
-    .cl-socialButtonsBlockButton { background: var(--surface2) !important; border-color: var(--border) !important; color: var(--text) !important; border-radius: 8px !important; }
-    .cl-dividerLine { background: var(--border) !important; }
-    .cl-dividerText { color: var(--muted) !important; }
-    .cl-formFieldLabel { color: var(--muted) !important; }
-    .cl-internal-b3fm6y { background: var(--bg) !important; }
+    @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
   `}</style>
 );
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const currency = (n) => `€${Number(n).toFixed(2)}`;
-const today = new Date("2026-04-13");
+const today = new Date("2026-04-14");
 const fmt = (d) => d.toISOString().split("T")[0];
 const todayStr = fmt(today);
 const timeSlots = Array.from({ length: 22 }, (_, i) => {
@@ -110,71 +100,222 @@ const Icon = ({ name, size=16, color="currentColor" }) => {
     clock:     "M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z",
     mail:      "M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z",
     logout:    "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
+    check:     "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
+    crown:     "M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z",
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ flexShrink:0 }}><path d={paths[name]||paths.star}/></svg>;
 };
 
-// ─── Auth Screen ──────────────────────────────────────────────────────────────
-const AuthScreen = () => {
-  const [mode, setMode] = useState("signin");
+// ─── Pricing Page ─────────────────────────────────────────────────────────────
+const PricingPage = ({ onSelectPlan }) => {
+  const [loading, setLoading] = useState(null);
+
+  const plans = [
+    {
+      id: "basic",
+      name: "Basic",
+      price: 29,
+      color: "var(--blue)",
+      description: "Perfect for small salons just getting started",
+      features: [
+        "Unlimited clients & bookings",
+        "Weekly calendar view",
+        "Services & pricing management",
+        "Basic analytics",
+        "Email support",
+      ],
+      cta: "Start Free Trial",
+    },
+    {
+      id: "pro",
+      name: "Pro",
+      price: 59,
+      color: "var(--gold)",
+      popular: true,
+      description: "Most popular — everything you need to grow",
+      features: [
+        "Everything in Basic",
+        "AI-powered message generator",
+        "AI assistant chat",
+        "Automated follow-ups",
+        "WhatsApp & SMS templates",
+        "Advanced analytics",
+        "Priority support",
+      ],
+      cta: "Start Free Trial",
+    },
+    {
+      id: "premium",
+      name: "Premium",
+      price: 99,
+      color: "#9b8ec4",
+      description: "For established salons that want full automation",
+      features: [
+        "Everything in Pro",
+        "Real SMS & WhatsApp sending",
+        "Automated booking reminders",
+        "Website AI chat widget",
+        "Custom domain",
+        "Multi-staff management",
+        "Dedicated support",
+      ],
+      cta: "Start Free Trial",
+    },
+  ];
+
+  const handlePlan = async (plan) => {
+    setLoading(plan.id);
+    // Simulate Stripe checkout (in production this calls your backend)
+    await new Promise(r => setTimeout(r, 1500));
+    onSelectPlan(plan);
+    setLoading(null);
+  };
+
   return (
-    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"var(--bg)", padding:20 }}>
-      {/* Logo */}
-      <div style={{ marginBottom:40, textAlign:"center" }}>
-        <div style={{ width:56, height:56, borderRadius:16, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
-          <Icon name="star" size={28} color="#1a1410" />
+    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", padding:"60px 20px" }}>
+      {/* Header */}
+      <div style={{ textAlign:"center", marginBottom:60 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, marginBottom:24 }}>
+          <div style={{ width:44, height:44, borderRadius:12, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <Icon name="star" size={22} color="#1a1410"/>
+          </div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:700, color:"var(--cream)" }}>SalonPro</div>
         </div>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:700, color:"var(--cream)" }}>SalonPro</div>
-        <div style={{ fontSize:13, color:"var(--muted)", marginTop:4, letterSpacing:".05em" }}>MANAGEMENT SUITE</div>
+        <h1 style={{ fontSize:48, color:"var(--cream)", lineHeight:1.1, marginBottom:16 }}>
+          Simple, transparent<br/>
+          <span style={{ background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>pricing</span>
+        </h1>
+        <p style={{ fontSize:16, color:"var(--muted)", maxWidth:480, margin:"0 auto" }}>
+          14-day free trial on all plans. No credit card required to start.
+          Cancel anytime.
+        </p>
       </div>
 
-      {/* Clerk component */}
+      {/* Plans */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:24, maxWidth:960, width:"100%" }}>
+        {plans.map(plan => (
+          <div key={plan.id} className="fade-up" style={{ background:"var(--surface)", border:`1px solid ${plan.popular?"var(--gold)":"var(--border)"}`, borderRadius:20, padding:32, display:"flex", flexDirection:"column", position:"relative", boxShadow:plan.popular?"0 0 40px rgba(201,168,76,.15)":"none" }}>
+            {plan.popular && (
+              <div style={{ position:"absolute", top:-14, left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", color:"#1a1410", padding:"4px 16px", borderRadius:20, fontSize:12, fontWeight:700, whiteSpace:"nowrap" }}>
+                ✦ Most Popular
+              </div>
+            )}
+            <div style={{ marginBottom:24 }}>
+              <div style={{ fontSize:13, fontWeight:600, color:plan.color, marginBottom:8, textTransform:"uppercase", letterSpacing:".1em" }}>{plan.name}</div>
+              <div style={{ display:"flex", alignItems:"flex-end", gap:4, marginBottom:8 }}>
+                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:52, fontWeight:700, color:"var(--cream)", lineHeight:1 }}>€{plan.price}</span>
+                <span style={{ fontSize:14, color:"var(--muted)", marginBottom:8 }}>/month</span>
+              </div>
+              <p style={{ fontSize:13, color:"var(--muted)", lineHeight:1.5 }}>{plan.description}</p>
+            </div>
+
+            <div style={{ flex:1, display:"flex", flexDirection:"column", gap:10, marginBottom:28 }}>
+              {plan.features.map(f => (
+                <div key={f} style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+                  <div style={{ width:18, height:18, borderRadius:"50%", background:`${plan.color}22`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1 }}>
+                    <Icon name="check" size={11} color={plan.color}/>
+                  </div>
+                  <span style={{ fontSize:13, color:"var(--text)", lineHeight:1.4 }}>{f}</span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => handlePlan(plan)}
+              disabled={loading === plan.id}
+              style={{
+                background: plan.popular ? "linear-gradient(135deg,var(--gold),var(--gold-lt))" : "transparent",
+                border: plan.popular ? "none" : `1px solid ${plan.color}`,
+                color: plan.popular ? "#1a1410" : plan.color,
+                borderRadius:10, padding:"12px 20px",
+                fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:14,
+                cursor: loading===plan.id ? "not-allowed" : "pointer",
+                opacity: loading===plan.id ? .7 : 1,
+                transition:"all .2s",
+              }}
+            >
+              {loading===plan.id ? <><span className="spin" style={{ marginRight:6 }}>◌</span>Processing…</> : plan.cta}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Trust badges */}
+      <div style={{ marginTop:48, display:"flex", gap:32, flexWrap:"wrap", justifyContent:"center" }}>
+        {["🔒 Secure payments via Stripe","💳 No credit card to start","🔄 Cancel anytime","🇪🇺 GDPR compliant"].map(badge => (
+          <div key={badge} style={{ fontSize:13, color:"var(--muted)" }}>{badge}</div>
+        ))}
+      </div>
+
+      {/* Already have account */}
+      <div style={{ marginTop:32, fontSize:13, color:"var(--muted)" }}>
+        Already have an account?{" "}
+        <button onClick={() => onSelectPlan({ id:"existing" })} style={{ background:"none", border:"none", color:"var(--gold)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
+          Sign in →
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Auth Screen ──────────────────────────────────────────────────────────────
+const AuthScreen = () => {
+  const [stage, setStage] = useState("pricing"); // pricing | signin | signup
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  const handleSelectPlan = (plan) => {
+    setSelectedPlan(plan);
+    setStage(plan.id === "existing" ? "signin" : "signup");
+  };
+
+  const clerkAppearance = {
+    elements: {
+      rootBox: { width:"100%" },
+      card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:18, boxShadow:"0 24px 64px rgba(0,0,0,.5)" },
+      headerTitle: { color:"var(--cream)", fontFamily:"'Cormorant Garamond',serif", fontSize:26 },
+      headerSubtitle: { color:"var(--muted)" },
+      formButtonPrimary: { background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", color:"#1a1410", fontWeight:600 },
+      formFieldInput: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--text)" },
+      footerActionLink: { color:"var(--gold)" },
+      socialButtonsBlockButton: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--text)" },
+      dividerLine: { background:"var(--border)" },
+      dividerText: { color:"var(--muted)" },
+      formFieldLabel: { color:"var(--muted)" },
+    }
+  };
+
+  if (stage === "pricing") return <PricingPage onSelectPlan={handleSelectPlan} />;
+
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"var(--bg)", padding:20 }}>
+      <div style={{ marginBottom:32, textAlign:"center" }}>
+        <div style={{ width:48, height:48, borderRadius:14, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
+          <Icon name="star" size={24} color="#1a1410"/>
+        </div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:700, color:"var(--cream)" }}>SalonPro</div>
+        {selectedPlan && selectedPlan.id !== "existing" && (
+          <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:8, justifyContent:"center" }}>
+            <span className="badge badge-gold">✦ {selectedPlan.name} Plan — €{selectedPlan.price}/mo</span>
+          </div>
+        )}
+      </div>
       <div style={{ width:"100%", maxWidth:420 }}>
-        {mode === "signin" ? (
-          <SignIn
-            appearance={{
-              elements: {
-                rootBox: { width:"100%" },
-                card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:18, boxShadow:"0 24px 64px rgba(0,0,0,.5)" },
-                headerTitle: { color:"var(--cream)", fontFamily:"'Cormorant Garamond',serif", fontSize:26 },
-                headerSubtitle: { color:"var(--muted)" },
-                formButtonPrimary: { background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", color:"#1a1410", fontWeight:600 },
-                formFieldInput: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--text)" },
-                footerActionLink: { color:"var(--gold)" },
-                socialButtonsBlockButton: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--text)" },
-                dividerLine: { background:"var(--border)" },
-                dividerText: { color:"var(--muted)" },
-                formFieldLabel: { color:"var(--muted)" },
-                identityPreviewText: { color:"var(--text)" },
-                identityPreviewEditButton: { color:"var(--gold)" },
-              }
-            }}
-          />
+        {stage === "signup" ? (
+          <SignUp appearance={clerkAppearance} />
         ) : (
-          <SignUp
-            appearance={{
-              elements: {
-                rootBox: { width:"100%" },
-                card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:18, boxShadow:"0 24px 64px rgba(0,0,0,.5)" },
-                headerTitle: { color:"var(--cream)", fontFamily:"'Cormorant Garamond',serif", fontSize:26 },
-                headerSubtitle: { color:"var(--muted)" },
-                formButtonPrimary: { background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", color:"#1a1410", fontWeight:600 },
-                formFieldInput: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--text)" },
-                footerActionLink: { color:"var(--gold)" },
-                socialButtonsBlockButton: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--text)" },
-                dividerLine: { background:"var(--border)" },
-                dividerText: { color:"var(--muted)" },
-                formFieldLabel: { color:"var(--muted)" },
-              }
-            }}
-          />
+          <SignIn appearance={clerkAppearance} />
         )}
         <div style={{ textAlign:"center", marginTop:16, fontSize:13, color:"var(--muted)" }}>
-          {mode==="signin" ? "Don't have an account? " : "Already have an account? "}
-          <button onClick={() => setMode(mode==="signin"?"signup":"signin")} style={{ background:"none", border:"none", color:"var(--gold)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
-            {mode==="signin" ? "Sign up" : "Sign in"}
+          {stage==="signup" ? "Already have an account? " : "Don't have an account? "}
+          <button onClick={()=>setStage(stage==="signup"?"signin":"signup")} style={{ background:"none", border:"none", color:"var(--gold)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
+            {stage==="signup" ? "Sign in" : "Sign up"}
           </button>
         </div>
+        {stage==="signup" && (
+          <button onClick={()=>setStage("pricing")} style={{ display:"block", margin:"12px auto 0", background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:12, fontFamily:"'DM Sans',sans-serif" }}>
+            ← Back to pricing
+          </button>
+        )}
       </div>
     </div>
   );
@@ -186,7 +327,7 @@ const StatCard = ({ label, value, sub, icon, color="var(--gold)" }) => (
     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
       <div style={{ fontSize:13, color:"var(--muted)", fontWeight:500 }}>{label}</div>
       <div style={{ background:`${color}22`, borderRadius:8, padding:8, display:"flex" }}>
-        <Icon name={icon} size={18} color={color} />
+        <Icon name={icon} size={18} color={color}/>
       </div>
     </div>
     <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:600, color:"var(--cream)", lineHeight:1 }}>{value}</div>
@@ -196,11 +337,10 @@ const StatCard = ({ label, value, sub, icon, color="var(--gold)" }) => (
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 const Dashboard = ({ bookings, clients, services, salonName }) => {
-  const todayBookings = bookings.filter(b => b.date===todayStr);
-  const monthRevenue = bookings.filter(b => b.date?.startsWith("2026-04")).reduce((s,b) => {
-    const svc = services.find(sv=>sv.id===b.service_id);
-    return s+(svc?.price||0);
-  }, 0);
+  const todayBookings = bookings.filter(b=>b.date===todayStr);
+  const monthRevenue = bookings.filter(b=>b.date?.startsWith("2026-04")).reduce((s,b)=>{
+    const svc=services.find(sv=>sv.id===b.service_id); return s+(svc?.price||0);
+  },0);
   const upcoming = [...bookings].filter(b=>b.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)).slice(0,5);
   const svcPopularity = services.map(s=>({...s,count:bookings.filter(b=>b.service_id===s.id).length})).sort((a,b)=>b.count-a.count).slice(0,5);
 
@@ -211,32 +351,30 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
           <h2 style={{ fontSize:28, color:"var(--cream)" }}>Good morning ✨</h2>
           <p style={{ color:"var(--muted)", marginTop:4 }}>Here's what's happening at <strong style={{ color:"var(--gold)" }}>{salonName}</strong> today</p>
         </div>
-        <div style={{ fontSize:13, color:"var(--muted)" }}>Monday, 13 April 2026</div>
+        <div style={{ fontSize:13, color:"var(--muted)" }}>Tuesday, 14 April 2026</div>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16 }}>
-        <StatCard label="Today's Appointments" value={todayBookings.length} sub={`${todayBookings.filter(b=>b.status==="confirmed").length} confirmed`} icon="calendar" />
-        <StatCard label="April Revenue" value={currency(monthRevenue)} sub="Live from database" icon="stats" color="var(--green)" />
-        <StatCard label="Total Clients" value={clients.length} sub="Saved in Supabase" icon="clients" color="var(--blue)" />
-        <StatCard label="Total Services" value={services.length} sub="Across all categories" icon="services" color="#9b8ec4" />
+        <StatCard label="Today's Appointments" value={todayBookings.length} sub={`${todayBookings.filter(b=>b.status==="confirmed").length} confirmed`} icon="calendar"/>
+        <StatCard label="April Revenue" value={currency(monthRevenue)} sub="Live from database" icon="stats" color="var(--green)"/>
+        <StatCard label="Total Clients" value={clients.length} sub="Saved in Supabase" icon="clients" color="var(--blue)"/>
+        <StatCard label="Total Services" value={services.length} sub="Across all categories" icon="services" color="#9b8ec4"/>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
         <div className="card fade-up">
           <h3 style={{ fontSize:18, marginBottom:16, color:"var(--cream)" }}>Today's Schedule</h3>
           {todayBookings.length===0 && <p style={{ color:"var(--muted)", fontSize:14 }}>No bookings today.</p>}
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            {todayBookings.sort((a,b)=>a.time.localeCompare(b.time)).map(b => {
+            {todayBookings.sort((a,b)=>a.time.localeCompare(b.time)).map(b=>{
               const client=clients.find(c=>c.id===b.client_id);
               const svc=services.find(s=>s.id===b.service_id);
-              return (
-                <div key={b.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:"var(--surface2)", borderRadius:10, borderLeft:`3px solid ${svc?.color||"var(--gold)"}` }}>
-                  <div style={{ fontSize:13, fontWeight:600, color:"var(--gold)", minWidth:44 }}>{b.time}</div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontSize:14, fontWeight:500, color:"var(--cream)" }}>{client?.name}</div>
-                    <div style={{ fontSize:12, color:"var(--muted)" }}>{svc?.name} · {b.staff}</div>
-                  </div>
-                  <span className={`badge ${b.status==="confirmed"?"badge-green":"badge-gold"}`}>{b.status}</span>
+              return <div key={b.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:"var(--surface2)", borderRadius:10, borderLeft:`3px solid ${svc?.color||"var(--gold)"}` }}>
+                <div style={{ fontSize:13, fontWeight:600, color:"var(--gold)", minWidth:44 }}>{b.time}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:500, color:"var(--cream)" }}>{client?.name}</div>
+                  <div style={{ fontSize:12, color:"var(--muted)" }}>{svc?.name} · {b.staff}</div>
                 </div>
-              );
+                <span className={`badge ${b.status==="confirmed"?"badge-green":"badge-gold"}`}>{b.status}</span>
+              </div>;
             })}
           </div>
         </div>
@@ -244,13 +382,13 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
           <h3 style={{ fontSize:18, marginBottom:16, color:"var(--cream)" }}>Top Services</h3>
           {svcPopularity.length===0 && <p style={{ color:"var(--muted)", fontSize:14 }}>Add services to see stats.</p>}
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            {svcPopularity.map((s,i) => (
+            {svcPopularity.map((s,i)=>(
               <div key={s.id} style={{ display:"flex", alignItems:"center", gap:12 }}>
                 <div style={{ fontFamily:"monospace", fontSize:12, color:"var(--muted)", minWidth:16 }}>#{i+1}</div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13, color:"var(--cream)" }}>{s.name}</div>
                   <div style={{ height:4, background:"var(--surface2)", borderRadius:4, marginTop:4 }}>
-                    <div style={{ height:"100%", width:`${Math.max((s.count/(svcPopularity[0]?.count||1))*100,8)}%`, background:s.color, borderRadius:4 }} />
+                    <div style={{ height:"100%", width:`${Math.max((s.count/(svcPopularity[0]?.count||1))*100,8)}%`, background:s.color, borderRadius:4 }}/>
                   </div>
                 </div>
                 <div style={{ fontSize:13, color:"var(--gold)", fontWeight:600 }}>{currency(s.price)}</div>
@@ -270,20 +408,18 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
               </tr>
             </thead>
             <tbody>
-              {upcoming.map(b => {
+              {upcoming.map(b=>{
                 const client=clients.find(c=>c.id===b.client_id);
                 const svc=services.find(s=>s.id===b.service_id);
-                return (
-                  <tr key={b.id} style={{ borderBottom:"1px solid var(--border)" }}>
-                    <td style={{ padding:"10px 12px", color:"var(--muted)" }}>{b.date}</td>
-                    <td style={{ padding:"10px 12px", color:"var(--gold)", fontWeight:600 }}>{b.time}</td>
-                    <td style={{ padding:"10px 12px", color:"var(--cream)", fontWeight:500 }}>{client?.name}</td>
-                    <td style={{ padding:"10px 12px" }}>{svc?.name}</td>
-                    <td style={{ padding:"10px 12px", color:"var(--muted)" }}>{b.staff}</td>
-                    <td style={{ padding:"10px 12px", color:"var(--gold)" }}>{currency(svc?.price||0)}</td>
-                    <td style={{ padding:"10px 12px" }}><span className={`badge ${b.status==="confirmed"?"badge-green":"badge-gold"}`}>{b.status}</span></td>
-                  </tr>
-                );
+                return <tr key={b.id} style={{ borderBottom:"1px solid var(--border)" }}>
+                  <td style={{ padding:"10px 12px", color:"var(--muted)" }}>{b.date}</td>
+                  <td style={{ padding:"10px 12px", color:"var(--gold)", fontWeight:600 }}>{b.time}</td>
+                  <td style={{ padding:"10px 12px", color:"var(--cream)", fontWeight:500 }}>{client?.name}</td>
+                  <td style={{ padding:"10px 12px" }}>{svc?.name}</td>
+                  <td style={{ padding:"10px 12px", color:"var(--muted)" }}>{b.staff}</td>
+                  <td style={{ padding:"10px 12px", color:"var(--gold)" }}>{currency(svc?.price||0)}</td>
+                  <td style={{ padding:"10px 12px" }}><span className={`badge ${b.status==="confirmed"?"badge-green":"badge-gold"}`}>{b.status}</span></td>
+                </tr>;
               })}
             </tbody>
           </table>
@@ -304,14 +440,10 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
   const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
   const saveBooking = async () => {
-    if (!form.clientId || !form.serviceId) return;
+    if (!form.clientId||!form.serviceId) return;
     setSaving(true);
-    const { data, error } = await supabase.from("bookings").insert([{
-      client_id:Number(form.clientId), service_id:Number(form.serviceId),
-      date:selectedSlot.date, time:selectedSlot.time, staff:form.staff,
-      status:"confirmed", notes:form.notes
-    }]).select();
-    if (!error && data) setBookings(p=>[...p,data[0]]);
+    const { data, error } = await supabase.from("bookings").insert([{ client_id:Number(form.clientId), service_id:Number(form.serviceId), date:selectedSlot.date, time:selectedSlot.time, staff:form.staff, status:"confirmed", notes:form.notes }]).select();
+    if (!error&&data) setBookings(p=>[...p,data[0]]);
     setSaving(false); setShowModal(false);
   };
 
@@ -334,7 +466,7 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
       <div className="card" style={{ padding:0, overflow:"hidden" }}>
         <div style={{ display:"grid", gridTemplateColumns:"64px repeat(7,1fr)", borderBottom:"1px solid var(--border)" }}>
           <div style={{ padding:"12px 8px", borderRight:"1px solid var(--border)" }}/>
-          {days.map((d,i) => {
+          {days.map((d,i)=>{
             const isToday=fmt(d)===todayStr;
             return <div key={i} style={{ padding:"12px 8px", textAlign:"center", borderRight:i<6?"1px solid var(--border)":"none", background:isToday?"rgba(201,168,76,.07)":"transparent" }}>
               <div style={{ fontSize:11, color:"var(--muted)", marginBottom:2 }}>{DAY_NAMES[i]}</div>
@@ -343,10 +475,10 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
           })}
         </div>
         <div style={{ maxHeight:520, overflowY:"auto" }}>
-          {timeSlots.map(slot => (
+          {timeSlots.map(slot=>(
             <div key={slot} style={{ display:"grid", gridTemplateColumns:"64px repeat(7,1fr)", borderBottom:"1px solid var(--border)", minHeight:52 }}>
               <div style={{ padding:"4px 8px", fontSize:11, color:"var(--muted)", borderRight:"1px solid var(--border)", paddingTop:6, textAlign:"right" }}>{slot}</div>
-              {days.map((d,di) => {
+              {days.map((d,di)=>{
                 const dayBks=bookings.filter(b=>b.date===fmt(d)&&b.time===slot);
                 const isToday=fmt(d)===todayStr;
                 return <div key={di} onClick={()=>{setSelectedSlot({date:fmt(d),time:slot});setForm({clientId:"",serviceId:"",staff:STAFF[0],notes:""});setShowModal(true);}}
@@ -368,7 +500,7 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
           ))}
         </div>
       </div>
-      {showModal && (
+      {showModal&&(
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 }} onClick={()=>setShowModal(false)}>
           <div className="card fade-up" style={{ width:420, padding:28 }} onClick={e=>e.stopPropagation()}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
@@ -379,13 +511,11 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
             <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
               <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Client</label>
                 <select style={{ width:"100%" }} value={form.clientId} onChange={e=>setForm(p=>({...p,clientId:e.target.value}))}>
-                  <option value="">Select client…</option>
-                  {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                  <option value="">Select client…</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
                 </select></div>
               <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Service</label>
                 <select style={{ width:"100%" }} value={form.serviceId} onChange={e=>setForm(p=>({...p,serviceId:e.target.value}))}>
-                  <option value="">Select service…</option>
-                  {services.map(s=><option key={s.id} value={s.id}>{s.category} · {s.name} – {currency(s.price)}</option>)}
+                  <option value="">Select service…</option>{services.map(s=><option key={s.id} value={s.id}>{s.category} · {s.name} – {currency(s.price)}</option>)}
                 </select></div>
               <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Staff</label>
                 <select style={{ width:"100%" }} value={form.staff} onChange={e=>setForm(p=>({...p,staff:e.target.value}))}>
@@ -417,7 +547,7 @@ const Clients = ({ clients, setClients, bookings, services }) => {
     if (!newClient.name) return;
     setSaving(true);
     const { data, error } = await supabase.from("clients").insert([{ name:newClient.name, phone:newClient.phone, email:newClient.email, notes:newClient.notes, tags:[], total_spent:0, visits:0, last_visit:"—" }]).select();
-    if (!error && data) setClients(p=>[...p,data[0]]);
+    if (!error&&data) setClients(p=>[...p,data[0]]);
     setNewClient({ name:"", phone:"", email:"", notes:"" });
     setSaving(false); setShowAdd(false);
   };
@@ -435,33 +565,27 @@ const Clients = ({ clients, setClients, bookings, services }) => {
           <button className="gold-btn" onClick={()=>setShowAdd(true)}>+ Add</button>
         </div>
         <div style={{ flex:1, overflowY:"auto", display:"flex", flexDirection:"column", gap:8 }}>
-          {filtered.length===0 && <p style={{ color:"var(--muted)", fontSize:14, padding:8 }}>No clients yet.</p>}
+          {filtered.length===0&&<p style={{ color:"var(--muted)", fontSize:14, padding:8 }}>No clients yet.</p>}
           {filtered.map(c=>(
             <div key={c.id} className="card" onClick={()=>setSelected(c)} style={{ cursor:"pointer", padding:"14px 16px", border:selected?.id===c.id?"1px solid var(--gold)":"1px solid var(--border)" }}>
               <div style={{ display:"flex", justifyContent:"space-between" }}>
-                <div>
-                  <div style={{ fontWeight:600, color:"var(--cream)", fontSize:15 }}>{c.name}</div>
-                  <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{c.phone}</div>
-                </div>
+                <div><div style={{ fontWeight:600, color:"var(--cream)", fontSize:15 }}>{c.name}</div><div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>{c.phone}</div></div>
                 <div style={{ display:"flex", gap:4 }}>{(c.tags||[]).map(t=><span key={t} className={`badge ${t==="VIP"?"badge-gold":"badge-blue"}`}>{t}</span>)}</div>
               </div>
               <div style={{ display:"flex", justifyContent:"space-between", marginTop:8, fontSize:12, color:"var(--muted)" }}>
-                <span>{c.visits||0} visits</span>
-                <span style={{ color:"var(--gold)" }}>{currency(c.total_spent||0)} total</span>
+                <span>{c.visits||0} visits</span><span style={{ color:"var(--gold)" }}>{currency(c.total_spent||0)} total</span>
               </div>
             </div>
           ))}
         </div>
       </div>
-      {selected ? (
+      {selected?(
         <div style={{ flex:1, display:"flex", flexDirection:"column", gap:16, overflowY:"auto" }}>
           <div className="card" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
             <div>
               <h2 style={{ fontSize:26, color:"var(--cream)" }}>{selected.name}</h2>
-              <div style={{ display:"flex", gap:16, marginTop:8, fontSize:14, color:"var(--muted)" }}>
-                <span>📧 {selected.email||"—"}</span><span>📞 {selected.phone||"—"}</span>
-              </div>
-              {selected.notes && <p style={{ marginTop:10, fontSize:13, color:"var(--muted)", fontStyle:"italic" }}>"{selected.notes}"</p>}
+              <div style={{ display:"flex", gap:16, marginTop:8, fontSize:14, color:"var(--muted)" }}><span>📧 {selected.email||"—"}</span><span>📞 {selected.phone||"—"}</span></div>
+              {selected.notes&&<p style={{ marginTop:10, fontSize:13, color:"var(--muted)", fontStyle:"italic" }}>"{selected.notes}"</p>}
             </div>
             <button className="ghost-btn" style={{ color:"var(--red)", borderColor:"var(--red)" }} onClick={()=>deleteClient(selected.id)}>Delete</button>
           </div>
@@ -472,7 +596,7 @@ const Clients = ({ clients, setClients, bookings, services }) => {
           </div>
           <div className="card">
             <h3 style={{ fontSize:18, marginBottom:14, color:"var(--cream)" }}>Booking History</h3>
-            {clientBookings(selected.id).length===0 && <p style={{ color:"var(--muted)", fontSize:14 }}>No bookings yet.</p>}
+            {clientBookings(selected.id).length===0&&<p style={{ color:"var(--muted)", fontSize:14 }}>No bookings yet.</p>}
             <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
               {clientBookings(selected.id).map(b=>(
                 <div key={b.id} style={{ display:"flex", gap:12, alignItems:"center", padding:"10px 14px", background:"var(--surface2)", borderRadius:10 }}>
@@ -485,8 +609,8 @@ const Clients = ({ clients, setClients, bookings, services }) => {
             </div>
           </div>
         </div>
-      ) : <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", color:"var(--muted)" }}>Select a client to view details</div>}
-      {showAdd && (
+      ):<div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", color:"var(--muted)" }}>Select a client to view details</div>}
+      {showAdd&&(
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 }} onClick={()=>setShowAdd(false)}>
           <div className="card fade-up" style={{ width:400, padding:28 }} onClick={e=>e.stopPropagation()}>
             <h3 style={{ fontSize:20, color:"var(--cream)", marginBottom:20 }}>New Client</h3>
@@ -535,7 +659,7 @@ const ServicesView = ({ services, setServices }) => {
         <h2 style={{ fontSize:24, color:"var(--cream)" }}>Services & Pricing</h2>
         <button className="gold-btn" onClick={()=>setShowAdd(true)}>+ Add Service</button>
       </div>
-      {services.length===0 && <div className="card" style={{ textAlign:"center", padding:40 }}><p style={{ color:"var(--muted)" }}>No services yet. Add your first service!</p></div>}
+      {services.length===0&&<div className="card" style={{ textAlign:"center", padding:40 }}><p style={{ color:"var(--muted)" }}>No services yet. Add your first service!</p></div>}
       {CATS.map(cat=>grouped[cat].length>0&&(
         <div key={cat} className="card fade-up">
           <h3 style={{ fontSize:18, marginBottom:14, color:CAT_COLORS[cat]||"var(--gold)" }}>{cat}</h3>
@@ -551,7 +675,7 @@ const ServicesView = ({ services, setServices }) => {
           </div>
         </div>
       ))}
-      {showAdd && (
+      {showAdd&&(
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100 }} onClick={()=>setShowAdd(false)}>
           <div className="card fade-up" style={{ width:400, padding:28 }} onClick={e=>e.stopPropagation()}>
             <h3 style={{ fontSize:20, color:"var(--cream)", marginBottom:20 }}>Add Service</h3>
@@ -589,19 +713,18 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
   const [chatLoading, setChatLoading] = useState(false);
   const [tab, setTab] = useState("msg");
   const chatEndRef = useRef(null);
-
   useEffect(()=>{ chatEndRef.current?.scrollIntoView({behavior:"smooth"}); },[chatHistory]);
 
   const generateMessage = async () => {
     if (!selectedClient) return;
     setLoading(true); setResult("");
-    const client = clients.find(c=>c.id===Number(selectedClient));
-    const lastBk = bookings.filter(b=>b.client_id===client.id).sort((a,b)=>b.date?.localeCompare(a.date))[0];
-    const lastSvc = lastBk ? services.find(s=>s.id===lastBk.service_id) : null;
-    const prompt = `You are a professional salon assistant for "${salonName}". Write a ${msgType==="email"?"personalized email":msgType==="sms"?"short SMS (max 160 chars)":"WhatsApp message"} for goal: "${aiGoal}". Client: ${client.name}, last visit: ${client.last_visit} (${lastSvc?.name||"unknown"}), ${client.visits||0} visits, notes: ${client.notes||"none"}. Services available: ${services.map(s=>`${s.name} (€${s.price})`).join(", ")}. ${msgType==="email"?"Include subject line first starting with 'Subject:'.":""} Write only the message, be warm and personal.`;
+    const client=clients.find(c=>c.id===Number(selectedClient));
+    const lastBk=bookings.filter(b=>b.client_id===client.id).sort((a,b)=>b.date?.localeCompare(a.date))[0];
+    const lastSvc=lastBk?services.find(s=>s.id===lastBk.service_id):null;
+    const prompt=`You are a professional salon assistant for "${salonName}". Write a ${msgType==="email"?"personalized email":msgType==="sms"?"short SMS (max 160 chars)":"WhatsApp message"} for goal: "${aiGoal}". Client: ${client.name}, last visit: ${client.last_visit} (${lastSvc?.name||"unknown"}), ${client.visits||0} visits, notes: ${client.notes||"none"}. Services: ${services.map(s=>`${s.name} (€${s.price})`).join(", ")}. ${msgType==="email"?"Include subject line first starting with 'Subject:'.":""} Write only the message, be warm and personal.`;
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
-      const data = await res.json();
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+      const data=await res.json();
       setResult(data.content?.[0]?.text||"Error.");
     } catch { setResult("Connection error."); }
     setLoading(false);
@@ -634,7 +757,7 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
           ))}
         </div>
       </div>
-      {tab==="msg" && (
+      {tab==="msg"&&(
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
           <div className="card" style={{ display:"flex", flexDirection:"column", gap:16 }}>
             <h3 style={{ fontSize:18, color:"var(--cream)" }}>Generate Message</h3>
@@ -666,7 +789,7 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
           </div>
         </div>
       )}
-      {tab==="chat" && (
+      {tab==="chat"&&(
         <div className="card" style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 220px)" }}>
           <div style={{ flex:1, overflowY:"auto", display:"flex", flexDirection:"column", gap:16, marginBottom:12 }}>
             {chatHistory.map((msg,i)=>(
@@ -699,7 +822,7 @@ const SalonApp = () => {
   const [salonName, setSalonName] = useState("Salon Élite");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(()=>{
     const loadData = async () => {
       const [{ data:c },{ data:s },{ data:b }] = await Promise.all([
         supabase.from("clients").select("*").order("created_at",{ascending:false}),
@@ -712,9 +835,9 @@ const SalonApp = () => {
       setLoading(false);
     };
     loadData();
-  }, []);
+  },[]);
 
-  const NAV = [
+  const NAV=[
     { id:"dashboard", label:"Dashboard", icon:"dashboard" },
     { id:"calendar",  label:"Calendar",  icon:"calendar" },
     { id:"clients",   label:"Clients",   icon:"clients" },
@@ -745,14 +868,11 @@ const SalonApp = () => {
             </div>
           </div>
         </div>
-
-        {/* User info */}
         <div style={{ padding:"12px 16px", borderBottom:"1px solid var(--border)" }}>
           <div style={{ fontSize:11, color:"var(--muted)", marginBottom:2 }}>Logged in as</div>
           <div style={{ fontWeight:600, color:"var(--gold)", fontSize:13, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user?.emailAddresses?.[0]?.emailAddress}</div>
           <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{salonName}</div>
         </div>
-
         <nav style={{ flex:1, padding:"12px 10px", display:"flex", flexDirection:"column", gap:4 }}>
           {NAV.map(item=>(
             <button key={item.id} onClick={()=>setPage(item.id)} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, border:"none", background:page===item.id?"rgba(201,168,76,.12)":"transparent", color:page===item.id?"var(--gold)":"var(--muted)", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:page===item.id?600:400, textAlign:"left", width:"100%", transition:"all .2s" }}>
@@ -762,7 +882,6 @@ const SalonApp = () => {
             </button>
           ))}
         </nav>
-
         <div style={{ padding:"14px 16px", borderTop:"1px solid var(--border)", display:"flex", flexDirection:"column", gap:8 }}>
           <div style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}>
             <span style={{ color:"var(--muted)" }}>Clients</span>
@@ -776,20 +895,20 @@ const SalonApp = () => {
             <div style={{ width:6, height:6, borderRadius:"50%", background:"var(--green)" }}/>
             <div style={{ fontSize:11, color:"var(--muted)" }}>Supabase connected</div>
           </div>
-          <button onClick={()=>signOut()} style={{ display:"flex", alignItems:"center", gap:8, background:"transparent", border:"1px solid var(--border)", borderRadius:8, padding:"7px 10px", color:"var(--muted)", cursor:"pointer", fontSize:12, fontFamily:"'DM Sans',sans-serif", marginTop:4, width:"100%", transition:"all .2s" }}
+          <button onClick={()=>signOut()}
+            style={{ display:"flex", alignItems:"center", gap:8, background:"transparent", border:"1px solid var(--border)", borderRadius:8, padding:"7px 10px", color:"var(--muted)", cursor:"pointer", fontSize:12, fontFamily:"'DM Sans',sans-serif", marginTop:4, width:"100%", transition:"all .2s" }}
             onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--red)";e.currentTarget.style.color="var(--red)";}}
             onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.color="var(--muted)";}}>
             <Icon name="logout" size={14}/> Sign out
           </button>
         </div>
       </aside>
-
       <main style={{ flex:1, overflowY:"auto", padding:"28px 28px" }}>
-        {page==="dashboard" && <Dashboard bookings={bookings} clients={clients} services={services} salonName={salonName}/>}
-        {page==="calendar"  && <CalendarView bookings={bookings} setBookings={setBookings} clients={clients} services={services}/>}
-        {page==="clients"   && <Clients clients={clients} setClients={setClients} bookings={bookings} services={services}/>}
-        {page==="services"  && <ServicesView services={services} setServices={setServices}/>}
-        {page==="ai"        && <AIHub clients={clients} bookings={bookings} services={services} salonName={salonName}/>}
+        {page==="dashboard"&&<Dashboard bookings={bookings} clients={clients} services={services} salonName={salonName}/>}
+        {page==="calendar" &&<CalendarView bookings={bookings} setBookings={setBookings} clients={clients} services={services}/>}
+        {page==="clients"  &&<Clients clients={clients} setClients={setClients} bookings={bookings} services={services}/>}
+        {page==="services" &&<ServicesView services={services} setServices={setServices}/>}
+        {page==="ai"       &&<AIHub clients={clients} bookings={bookings} services={services} salonName={salonName}/>}
       </main>
     </div>
   );
@@ -799,13 +918,9 @@ const SalonApp = () => {
 export default function App() {
   return (
     <>
-      <GlobalStyle />
-      <SignedOut>
-        <AuthScreen />
-      </SignedOut>
-      <SignedIn>
-        <SalonApp />
-      </SignedIn>
+      <GlobalStyle/>
+      <SignedOut><AuthScreen/></SignedOut>
+      <SignedIn><SalonApp/></SignedIn>
     </>
   );
 }
