@@ -708,7 +708,18 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
             <div style={{ flex:1, background:"var(--surface2)", borderRadius:12, padding:16, minHeight:300, overflowY:"auto", fontSize:14, lineHeight:1.7, color:result?"var(--text)":"var(--muted)", fontStyle:result?"normal":"italic", whiteSpace:"pre-wrap" }}>
               {loading?<div style={{ display:"flex", flexDirection:"column", gap:8 }}>{[100,80,90,60].map((w,i)=><div key={i} style={{ height:14, borderRadius:4, background:"var(--border)", width:`${w}%`, animation:`pulse 1.2s ${i*.15}s infinite` }}/>)}</div>:result||"Your AI-generated message will appear here…"}
             </div>
-            {result&&<button className="gold-btn">Send {msgType==="email"?"📧 Email":msgType==="sms"?"📱 SMS":"💬 WhatsApp"}</button>}
+            {result&&<button className="gold-btn" onClick={async()=>{
+  const client = clients.find(c=>c.id===Number(selectedClient));
+  if (msgType==="sms" && client?.phone) {
+    await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:client.phone,message:result})});
+    alert("SMS sent to "+client.name+"!");
+  } else if (msgType==="email" && client?.email) {
+    await fetch("/api/send-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:client.email,subject:"Message from your salon",html:`<div style="font-family:Georgia,serif;padding:32px;background:#0f0e0d;color:#e8ddd0;border-radius:16px;">${result.replace(/\n/g,"<br/>")}</div>`})});
+    alert("Email sent to "+client.name+"!");
+  } else {
+    alert("No "+msgType+" found for this client!");
+  }
+}}>Send {msgType==="email"?"📧 Email":msgType==="sms"?"📱 SMS":"💬 WhatsApp"}</button>}
           </div>
         </div>
       )}
