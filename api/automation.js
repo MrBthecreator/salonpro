@@ -27,7 +27,15 @@ async function generateAIMessage(prompt) {
   const data = await res.json();
   return data.content?.[0]?.text || '';
 }
-
+async function sendSMS(to, message) {
+  const twilio = require('twilio');
+  const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  await client.messages.create({
+    body: message,
+    from: process.env.TWILIO_PHONE_NUMBER,
+    to: to
+  });
+}
 module.exports = async (req, res) => {
   // Security check
   if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -76,7 +84,13 @@ module.exports = async (req, res) => {
     `);
     emailsSent++;
   }
-
+// Also send SMS if client has phone
+    if (booking.clients?.phone) {
+      const smsMessage = await generateAIMessage(
+        `Write a very short SMS (max 160 chars) thanking ${booking.clients.name} for their ${booking.services?.name} yesterday at the salon. Be warm and personal.`
+      );
+      await sendSMS(booking.clients.phone, smsMessage);
+    }
   // 2 — Win-back emails (no visit in 4 weeks)
   const { data: lapsedClients } = await supabase
     .from('clients')
