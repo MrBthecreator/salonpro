@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useUser, useClerk, SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
-import LandingPage from './LandingPage.jsx'
+import LandingPage from './LandingPage.jsx';
+import Onboarding from './Onboarding.jsx';
 
-// ─── Config ───────────────────────────────────────────────────────────────────
 const supabase = createClient(
   "https://tfutvrhuhaeremicicwp.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmdXR2cmh1aGFlcmVtaWNpY3dwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMDM2ODksImV4cCI6MjA5MTY3OTY4OX0._Y-3fAa10LQE7OXkPaWK6lUurSCtH0NMl1WfnuYhHeA"
@@ -17,7 +17,6 @@ const PRICE_IDS = {
 
 const TRIAL_DAYS = 14;
 
-// ─── Global styles ────────────────────────────────────────────────────────────
 const GlobalStyle = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -68,7 +67,6 @@ const GlobalStyle = () => (
   `}</style>
 );
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const currency = (n) => `€${Number(n).toFixed(2)}`;
 const today = new Date();
 const fmt = (d) => d.toISOString().split("T")[0];
@@ -93,7 +91,6 @@ const getDaysLeft = (trialStart) => {
   return Math.max(0, diff);
 };
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
 const Icon = ({ name, size=16, color="currentColor" }) => {
   const paths = {
     dashboard: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
@@ -114,59 +111,43 @@ const Icon = ({ name, size=16, color="currentColor" }) => {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ flexShrink:0 }}><path d={paths[name]||paths.star}/></svg>;
 };
 
-// ─── Paywall Screen ───────────────────────────────────────────────────────────
+// ─── Paywall ──────────────────────────────────────────────────────────────────
 const PaywallScreen = ({ user }) => {
   const [loading, setLoading] = useState(null);
   const { signOut } = useClerk();
-
   const plans = [
-    { id:"basic", name:"Basic", price:29, color:"var(--blue)", priceId: PRICE_IDS.basic,
-      features:["Unlimited clients & bookings","Weekly calendar view","Services & pricing","Basic analytics","Email support"] },
-    { id:"pro", name:"Pro", price:59, color:"var(--gold)", priceId: PRICE_IDS.pro, popular:true,
-      features:["Everything in Basic","AI message generator","AI assistant chat","Automated follow-ups","WhatsApp & SMS templates","Priority support"] },
-    { id:"premium", name:"Premium", price:99, color:"#9b8ec4", priceId: PRICE_IDS.premium,
-      features:["Everything in Pro","Real SMS & WhatsApp","Booking reminders","Website AI chat widget","Custom domain","Dedicated support"] },
+    { id:"basic", name:"Basic", price:29, color:"var(--blue)", priceId:PRICE_IDS.basic, features:["Unlimited clients & bookings","Weekly calendar view","Services & pricing","Basic analytics","Email support"] },
+    { id:"pro", name:"Pro", price:59, color:"var(--gold)", priceId:PRICE_IDS.pro, popular:true, features:["Everything in Basic","AI message generator","AI assistant chat","Automated follow-ups","WhatsApp & SMS templates","Priority support"] },
+    { id:"premium", name:"Premium", price:99, color:"#9b8ec4", priceId:PRICE_IDS.premium, features:["Everything in Pro","Real SMS & WhatsApp","Booking reminders","Website AI chat widget","Custom domain","Dedicated support"] },
   ];
-
   const handlePay = async (plan) => {
     setLoading(plan.id);
     try {
-      const res = await fetch("/api/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId: plan.priceId, email: user?.emailAddresses?.[0]?.emailAddress })
-      });
+      const res = await fetch("/api/create-checkout", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ priceId:plan.priceId, email:user?.emailAddresses?.[0]?.emailAddress }) });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
-      else alert("Error creating checkout. Please try again.");
-    } catch (e) {
-      alert("Connection error. Please try again.");
-    }
+      else alert("Error creating checkout.");
+    } catch { alert("Connection error."); }
     setLoading(null);
   };
-
   return (
     <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", padding:"60px 20px" }}>
       <div style={{ textAlign:"center", marginBottom:48 }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, marginBottom:20 }}>
-          <div style={{ width:44, height:44, borderRadius:12, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            <Icon name="lock" size={22} color="#1a1410"/>
-          </div>
+          <div style={{ width:44, height:44, borderRadius:12, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}><Icon name="lock" size={22} color="#1a1410"/></div>
           <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:700, color:"var(--cream)" }}>SalonPro</div>
         </div>
         <h1 style={{ fontSize:40, color:"var(--cream)", lineHeight:1.2, marginBottom:12 }}>Your free trial has ended</h1>
-        <p style={{ fontSize:16, color:"var(--muted)", maxWidth:480, margin:"0 auto 8px" }}>
-          Choose a plan to continue using SalonPro. Your data is safe and waiting for you.
-        </p>
+        <p style={{ fontSize:16, color:"var(--muted)", maxWidth:480, margin:"0 auto 8px" }}>Choose a plan to continue. Your data is safe.</p>
         <p style={{ fontSize:13, color:"var(--muted)" }}>Logged in as <strong style={{ color:"var(--gold)" }}>{user?.emailAddresses?.[0]?.emailAddress}</strong></p>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:20, maxWidth:900, width:"100%" }}>
-        {plans.map(plan => (
+        {plans.map(plan=>(
           <div key={plan.id} className="fade-up" style={{ background:"var(--surface)", border:`1px solid ${plan.popular?"var(--gold)":"var(--border)"}`, borderRadius:20, padding:28, display:"flex", flexDirection:"column", position:"relative", boxShadow:plan.popular?"0 0 40px rgba(201,168,76,.15)":"none" }}>
-            {plan.popular && <div style={{ position:"absolute", top:-14, left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", color:"#1a1410", padding:"4px 16px", borderRadius:20, fontSize:12, fontWeight:700, whiteSpace:"nowrap" }}>✦ Most Popular</div>}
+            {plan.popular&&<div style={{ position:"absolute", top:-14, left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", color:"#1a1410", padding:"4px 16px", borderRadius:20, fontSize:12, fontWeight:700, whiteSpace:"nowrap" }}>✦ Most Popular</div>}
             <div style={{ marginBottom:20 }}>
               <div style={{ fontSize:12, fontWeight:600, color:plan.color, marginBottom:6, textTransform:"uppercase", letterSpacing:".1em" }}>{plan.name}</div>
-              <div style={{ display:"flex", alignItems:"flex-end", gap:4, marginBottom:6 }}>
+              <div style={{ display:"flex", alignItems:"flex-end", gap:4 }}>
                 <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:44, fontWeight:700, color:"var(--cream)", lineHeight:1 }}>€{plan.price}</span>
                 <span style={{ fontSize:13, color:"var(--muted)", marginBottom:6 }}>/month</span>
               </div>
@@ -174,28 +155,21 @@ const PaywallScreen = ({ user }) => {
             <div style={{ flex:1, display:"flex", flexDirection:"column", gap:8, marginBottom:20 }}>
               {plan.features.map(f=>(
                 <div key={f} style={{ display:"flex", alignItems:"flex-start", gap:8 }}>
-                  <div style={{ width:16, height:16, borderRadius:"50%", background:`${plan.color}22`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1 }}>
-                    <Icon name="check" size={10} color={plan.color}/>
-                  </div>
+                  <div style={{ width:16, height:16, borderRadius:"50%", background:`${plan.color}22`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1 }}><Icon name="check" size={10} color={plan.color}/></div>
                   <span style={{ fontSize:13, color:"var(--text)" }}>{f}</span>
                 </div>
               ))}
             </div>
-            <button onClick={()=>handlePay(plan)} disabled={loading===plan.id}
-              style={{ background:plan.popular?"linear-gradient(135deg,var(--gold),var(--gold-lt))":"transparent", border:plan.popular?"none":`1px solid ${plan.color}`, color:plan.popular?"#1a1410":plan.color, borderRadius:10, padding:"11px 20px", fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:14, cursor:loading===plan.id?"not-allowed":"pointer", opacity:loading===plan.id?.7:1 }}>
+            <button onClick={()=>handlePay(plan)} disabled={loading===plan.id} style={{ background:plan.popular?"linear-gradient(135deg,var(--gold),var(--gold-lt))":"transparent", border:plan.popular?"none":`1px solid ${plan.color}`, color:plan.popular?"#1a1410":plan.color, borderRadius:10, padding:"11px 20px", fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:14, cursor:loading===plan.id?"not-allowed":"pointer", opacity:loading===plan.id?.7:1 }}>
               {loading===plan.id?<><span className="spin" style={{ marginRight:6 }}>◌</span>Redirecting…</>:"Subscribe Now →"}
             </button>
           </div>
         ))}
       </div>
       <div style={{ marginTop:32, display:"flex", gap:24, flexWrap:"wrap", justifyContent:"center" }}>
-        {["🔒 Secure payments via Stripe","🔄 Cancel anytime","💾 Your data is safe"].map(b=>(
-          <div key={b} style={{ fontSize:13, color:"var(--muted)" }}>{b}</div>
-        ))}
+        {["🔒 Secure payments via Stripe","🔄 Cancel anytime","💾 Your data is safe"].map(b=><div key={b} style={{ fontSize:13, color:"var(--muted)" }}>{b}</div>)}
       </div>
-      <button onClick={()=>signOut()} style={{ marginTop:24, background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
-        Sign out
-      </button>
+      <button onClick={()=>signOut()} style={{ marginTop:24, background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>Sign out</button>
     </div>
   );
 };
@@ -203,37 +177,19 @@ const PaywallScreen = ({ user }) => {
 // ─── Auth Screen ──────────────────────────────────────────────────────────────
 const AuthScreen = () => {
   const [mode, setMode] = useState("signin");
-  const appearance = {
-    elements: {
-      rootBox: { width:"100%" },
-      card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:18, boxShadow:"0 24px 64px rgba(0,0,0,.5)" },
-      headerTitle: { color:"var(--cream)", fontFamily:"'Cormorant Garamond',serif", fontSize:26 },
-      headerSubtitle: { color:"var(--muted)" },
-      formButtonPrimary: { background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", color:"#1a1410", fontWeight:600 },
-      formFieldInput: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--text)" },
-      footerActionLink: { color:"var(--gold)" },
-      socialButtonsBlockButton: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--text)" },
-      dividerLine: { background:"var(--border)" },
-      dividerText: { color:"var(--muted)" },
-      formFieldLabel: { color:"var(--muted)" },
-    }
-  };
+  const appearance = { elements: { rootBox:{width:"100%"}, card:{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:18,boxShadow:"0 24px 64px rgba(0,0,0,.5)"}, headerTitle:{color:"var(--cream)",fontFamily:"'Cormorant Garamond',serif",fontSize:26}, headerSubtitle:{color:"var(--muted)"}, formButtonPrimary:{background:"linear-gradient(135deg,var(--gold),var(--gold-lt))",color:"#1a1410",fontWeight:600}, formFieldInput:{background:"var(--surface2)",borderColor:"var(--border)",color:"var(--text)"}, footerActionLink:{color:"var(--gold)"}, socialButtonsBlockButton:{background:"var(--surface2)",borderColor:"var(--border)",color:"var(--text)"}, dividerLine:{background:"var(--border)"}, dividerText:{color:"var(--muted)"}, formFieldLabel:{color:"var(--muted)"} } };
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"var(--bg)", padding:20 }}>
       <div style={{ marginBottom:32, textAlign:"center" }}>
-        <div style={{ width:48, height:48, borderRadius:14, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
-          <Icon name="star" size={24} color="#1a1410"/>
-        </div>
+        <div style={{ width:48, height:48, borderRadius:14, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}><Icon name="star" size={24} color="#1a1410"/></div>
         <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:700, color:"var(--cream)" }}>SalonPro</div>
         <div style={{ fontSize:13, color:"var(--muted)", marginTop:6 }}>✨ 14-day free trial · No credit card required</div>
       </div>
       <div style={{ width:"100%", maxWidth:420 }}>
-        {mode==="signin" ? <SignIn appearance={appearance}/> : <SignUp appearance={appearance}/>}
+        {mode==="signin"?<SignIn appearance={appearance}/>:<SignUp appearance={appearance}/>}
         <div style={{ textAlign:"center", marginTop:16, fontSize:13, color:"var(--muted)" }}>
           {mode==="signin"?"Don't have an account? ":"Already have an account? "}
-          <button onClick={()=>setMode(mode==="signin"?"signup":"signin")} style={{ background:"none", border:"none", color:"var(--gold)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>
-            {mode==="signin"?"Start free trial →":"Sign in"}
-          </button>
+          <button onClick={()=>setMode(mode==="signin"?"signup":"signin")} style={{ background:"none", border:"none", color:"var(--gold)", cursor:"pointer", fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>{mode==="signin"?"Start free trial →":"Sign in"}</button>
         </div>
       </div>
     </div>
@@ -245,24 +201,19 @@ const StatCard = ({ label, value, sub, icon, color="var(--gold)" }) => (
   <div className="card fade-up" style={{ display:"flex", flexDirection:"column", gap:12 }}>
     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
       <div style={{ fontSize:13, color:"var(--muted)", fontWeight:500 }}>{label}</div>
-      <div style={{ background:`${color}22`, borderRadius:8, padding:8, display:"flex" }}>
-        <Icon name={icon} size={18} color={color}/>
-      </div>
+      <div style={{ background:`${color}22`, borderRadius:8, padding:8, display:"flex" }}><Icon name={icon} size={18} color={color}/></div>
     </div>
     <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:600, color:"var(--cream)", lineHeight:1 }}>{value}</div>
-    {sub && <div style={{ fontSize:12, color:"var(--muted)" }}>{sub}</div>}
+    {sub&&<div style={{ fontSize:12, color:"var(--muted)" }}>{sub}</div>}
   </div>
 );
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 const Dashboard = ({ bookings, clients, services, salonName }) => {
   const todayBookings = bookings.filter(b=>b.date===todayStr);
-  const monthRevenue = bookings.filter(b=>b.date?.startsWith(todayStr.slice(0,7))).reduce((s,b)=>{
-    const svc=services.find(sv=>sv.id===b.service_id); return s+(svc?.price||0);
-  },0);
+  const monthRevenue = bookings.filter(b=>b.date?.startsWith(todayStr.slice(0,7))).reduce((s,b)=>{ const svc=services.find(sv=>sv.id===b.service_id); return s+(svc?.price||0); },0);
   const upcoming = [...bookings].filter(b=>b.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)).slice(0,5);
   const svcPopularity = services.map(s=>({...s,count:bookings.filter(b=>b.service_id===s.id).length})).sort((a,b)=>b.count-a.count).slice(0,5);
-
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:12 }}>
@@ -274,8 +225,8 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16 }}>
         <StatCard label="Today's Appointments" value={todayBookings.length} sub={`${todayBookings.filter(b=>b.status==="confirmed").length} confirmed`} icon="calendar"/>
-        <StatCard label="Month Revenue" value={currency(monthRevenue)} sub="Live from database" icon="stats" color="var(--green)"/>
-        <StatCard label="Total Clients" value={clients.length} sub="Saved in Supabase" icon="clients" color="var(--blue)"/>
+        <StatCard label="Month Revenue" value={currency(monthRevenue)} sub="This month" icon="stats" color="var(--green)"/>
+        <StatCard label="Total Clients" value={clients.length} sub="In your database" icon="clients" color="var(--blue)"/>
         <StatCard label="Total Services" value={services.length} sub="Across all categories" icon="services" color="#9b8ec4"/>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
@@ -283,18 +234,7 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
           <h3 style={{ fontSize:18, marginBottom:16, color:"var(--cream)" }}>Today's Schedule</h3>
           {todayBookings.length===0&&<p style={{ color:"var(--muted)", fontSize:14 }}>No bookings today.</p>}
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            {todayBookings.sort((a,b)=>a.time.localeCompare(b.time)).map(b=>{
-              const client=clients.find(c=>c.id===b.client_id);
-              const svc=services.find(s=>s.id===b.service_id);
-              return <div key={b.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:"var(--surface2)", borderRadius:10, borderLeft:`3px solid ${svc?.color||"var(--gold)"}` }}>
-                <div style={{ fontSize:13, fontWeight:600, color:"var(--gold)", minWidth:44 }}>{b.time}</div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:14, fontWeight:500, color:"var(--cream)" }}>{client?.name}</div>
-                  <div style={{ fontSize:12, color:"var(--muted)" }}>{svc?.name} · {b.staff}</div>
-                </div>
-                <span className={`badge ${b.status==="confirmed"?"badge-green":"badge-gold"}`}>{b.status}</span>
-              </div>;
-            })}
+            {todayBookings.sort((a,b)=>a.time.localeCompare(b.time)).map(b=>{ const client=clients.find(c=>c.id===b.client_id); const svc=services.find(s=>s.id===b.service_id); return <div key={b.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:"var(--surface2)", borderRadius:10, borderLeft:`3px solid ${svc?.color||"var(--gold)"}` }}><div style={{ fontSize:13, fontWeight:600, color:"var(--gold)", minWidth:44 }}>{b.time}</div><div style={{ flex:1 }}><div style={{ fontSize:14, fontWeight:500, color:"var(--cream)" }}>{client?.name}</div><div style={{ fontSize:12, color:"var(--muted)" }}>{svc?.name} · {b.staff}</div></div><span className={`badge ${b.status==="confirmed"?"badge-green":"badge-gold"}`}>{b.status}</span></div>; })}
           </div>
         </div>
         <div className="card fade-up">
@@ -304,12 +244,7 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
             {svcPopularity.map((s,i)=>(
               <div key={s.id} style={{ display:"flex", alignItems:"center", gap:12 }}>
                 <div style={{ fontFamily:"monospace", fontSize:12, color:"var(--muted)", minWidth:16 }}>#{i+1}</div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:13, color:"var(--cream)" }}>{s.name}</div>
-                  <div style={{ height:4, background:"var(--surface2)", borderRadius:4, marginTop:4 }}>
-                    <div style={{ height:"100%", width:`${Math.max((s.count/(svcPopularity[0]?.count||1))*100,8)}%`, background:s.color, borderRadius:4 }}/>
-                  </div>
-                </div>
+                <div style={{ flex:1 }}><div style={{ fontSize:13, color:"var(--cream)" }}>{s.name}</div><div style={{ height:4, background:"var(--surface2)", borderRadius:4, marginTop:4 }}><div style={{ height:"100%", width:`${Math.max((s.count/(svcPopularity[0]?.count||1))*100,8)}%`, background:s.color, borderRadius:4 }}/></div></div>
                 <div style={{ fontSize:13, color:"var(--gold)", fontWeight:600 }}>{currency(s.price)}</div>
               </div>
             ))}
@@ -321,25 +256,9 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
         {upcoming.length===0&&<p style={{ color:"var(--muted)", fontSize:14 }}>No upcoming bookings yet.</p>}
         <div style={{ overflowX:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse", fontSize:14 }}>
-            <thead>
-              <tr style={{ borderBottom:"1px solid var(--border)", color:"var(--muted)", fontSize:12 }}>
-                {["Date","Time","Client","Service","Staff","Price","Status"].map(h=><th key={h} style={{ padding:"8px 12px", textAlign:"left", fontWeight:500 }}>{h}</th>)}
-              </tr>
-            </thead>
+            <thead><tr style={{ borderBottom:"1px solid var(--border)", color:"var(--muted)", fontSize:12 }}>{["Date","Time","Client","Service","Staff","Price","Status"].map(h=><th key={h} style={{ padding:"8px 12px", textAlign:"left", fontWeight:500 }}>{h}</th>)}</tr></thead>
             <tbody>
-              {upcoming.map(b=>{
-                const client=clients.find(c=>c.id===b.client_id);
-                const svc=services.find(s=>s.id===b.service_id);
-                return <tr key={b.id} style={{ borderBottom:"1px solid var(--border)" }}>
-                  <td style={{ padding:"10px 12px", color:"var(--muted)" }}>{b.date}</td>
-                  <td style={{ padding:"10px 12px", color:"var(--gold)", fontWeight:600 }}>{b.time}</td>
-                  <td style={{ padding:"10px 12px", color:"var(--cream)", fontWeight:500 }}>{client?.name}</td>
-                  <td style={{ padding:"10px 12px" }}>{svc?.name}</td>
-                  <td style={{ padding:"10px 12px", color:"var(--muted)" }}>{b.staff}</td>
-                  <td style={{ padding:"10px 12px", color:"var(--gold)" }}>{currency(svc?.price||0)}</td>
-                  <td style={{ padding:"10px 12px" }}><span className={`badge ${b.status==="confirmed"?"badge-green":"badge-gold"}`}>{b.status}</span></td>
-                </tr>;
-              })}
+              {upcoming.map(b=>{ const client=clients.find(c=>c.id===b.client_id); const svc=services.find(s=>s.id===b.service_id); return <tr key={b.id} style={{ borderBottom:"1px solid var(--border)" }}><td style={{ padding:"10px 12px", color:"var(--muted)" }}>{b.date}</td><td style={{ padding:"10px 12px", color:"var(--gold)", fontWeight:600 }}>{b.time}</td><td style={{ padding:"10px 12px", color:"var(--cream)", fontWeight:500 }}>{client?.name}</td><td style={{ padding:"10px 12px" }}>{svc?.name}</td><td style={{ padding:"10px 12px", color:"var(--muted)" }}>{b.staff}</td><td style={{ padding:"10px 12px", color:"var(--gold)" }}>{currency(svc?.price||0)}</td><td style={{ padding:"10px 12px" }}><span className={`badge ${b.status==="confirmed"?"badge-green":"badge-gold"}`}>{b.status}</span></td></tr>; })}
             </tbody>
           </table>
         </div>
@@ -349,7 +268,7 @@ const Dashboard = ({ bookings, clients, services, salonName }) => {
 };
 
 // ─── Calendar ─────────────────────────────────────────────────────────────────
-const CalendarView = ({ bookings, setBookings, clients, services }) => {
+const CalendarView = ({ bookings, setBookings, clients, services, userId }) => {
   const [weekBase, setWeekBase] = useState(new Date(today));
   const [showModal, setShowModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -361,7 +280,7 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
   const saveBooking = async () => {
     if (!form.clientId||!form.serviceId) return;
     setSaving(true);
-    const { data, error } = await supabase.from("bookings").insert([{ { client_id:Number(form.clientId), service_id:Number(form.serviceId), date:selectedSlot.date, time:selectedSlot.time, staff:form.staff, status:"confirmed", notes:form.notes, user_id: user.id } }]).select();
+    const { data, error } = await supabase.from("bookings").insert([{ client_id:Number(form.clientId), service_id:Number(form.serviceId), date:selectedSlot.date, time:selectedSlot.time, staff:form.staff, status:"confirmed", notes:form.notes, user_id:userId }]).select();
     if (!error&&data) setBookings(p=>[...p,data[0]]);
     setSaving(false); setShowModal(false);
   };
@@ -387,36 +306,13 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
           <div style={{ minWidth:600 }}>
             <div style={{ display:"grid", gridTemplateColumns:"64px repeat(7,1fr)", borderBottom:"1px solid var(--border)" }}>
               <div style={{ padding:"12px 8px", borderRight:"1px solid var(--border)" }}/>
-              {days.map((d,i)=>{
-                const isToday=fmt(d)===todayStr;
-                return <div key={i} style={{ padding:"12px 8px", textAlign:"center", borderRight:i<6?"1px solid var(--border)":"none", background:isToday?"rgba(201,168,76,.07)":"transparent" }}>
-                  <div style={{ fontSize:11, color:"var(--muted)", marginBottom:2 }}>{DAY_NAMES[i]}</div>
-                  <div style={{ fontSize:16, fontFamily:"'Cormorant Garamond',serif", fontWeight:600, color:isToday?"var(--gold)":"var(--cream)" }}>{d.getDate()}</div>
-                </div>;
-              })}
+              {days.map((d,i)=>{ const isToday=fmt(d)===todayStr; return <div key={i} style={{ padding:"12px 8px", textAlign:"center", borderRight:i<6?"1px solid var(--border)":"none", background:isToday?"rgba(201,168,76,.07)":"transparent" }}><div style={{ fontSize:11, color:"var(--muted)", marginBottom:2 }}>{DAY_NAMES[i]}</div><div style={{ fontSize:16, fontFamily:"'Cormorant Garamond',serif", fontWeight:600, color:isToday?"var(--gold)":"var(--cream)" }}>{d.getDate()}</div></div>; })}
             </div>
             <div style={{ maxHeight:520, overflowY:"auto" }}>
               {timeSlots.map(slot=>(
                 <div key={slot} style={{ display:"grid", gridTemplateColumns:"64px repeat(7,1fr)", borderBottom:"1px solid var(--border)", minHeight:52 }}>
                   <div style={{ padding:"4px 8px", fontSize:11, color:"var(--muted)", borderRight:"1px solid var(--border)", paddingTop:6, textAlign:"right" }}>{slot}</div>
-                  {days.map((d,di)=>{
-                    const dayBks=bookings.filter(b=>b.date===fmt(d)&&b.time===slot);
-                    const isToday=fmt(d)===todayStr;
-                    return <div key={di} onClick={()=>{setSelectedSlot({date:fmt(d),time:slot});setForm({clientId:"",serviceId:"",staff:STAFF[0],notes:""});setShowModal(true);}}
-                      style={{ borderRight:di<6?"1px solid var(--border)":"none", padding:"3px 4px", cursor:"pointer", background:isToday?"rgba(201,168,76,.03)":"transparent" }}
-                      onMouseEnter={e=>e.currentTarget.style.background="rgba(201,168,76,.08)"}
-                      onMouseLeave={e=>e.currentTarget.style.background=isToday?"rgba(201,168,76,.03)":"transparent"}>
-                      {dayBks.map(b=>{
-                        const client=clients.find(c=>c.id===b.client_id);
-                        const svc=services.find(s=>s.id===b.service_id);
-                        return <div key={b.id} onClick={e=>e.stopPropagation()} style={{ background:svc?.color?`${svc.color}33`:"rgba(201,168,76,.2)", border:`1px solid ${svc?.color||"var(--gold)"}66`, borderRadius:6, padding:"3px 6px", marginBottom:2, fontSize:11 }}>
-                          <div style={{ fontWeight:600, color:svc?.color||"var(--gold)" }}>{client?.name}</div>
-                          <div style={{ color:"var(--muted)" }}>{svc?.name}</div>
-                          <button onClick={()=>deleteBooking(b.id)} style={{ background:"none", border:"none", color:"var(--red)", cursor:"pointer", fontSize:10, padding:0 }}>✕</button>
-                        </div>;
-                      })}
-                    </div>;
-                  })}
+                  {days.map((d,di)=>{ const dayBks=bookings.filter(b=>b.date===fmt(d)&&b.time===slot); const isToday=fmt(d)===todayStr; return <div key={di} onClick={()=>{setSelectedSlot({date:fmt(d),time:slot});setForm({clientId:"",serviceId:"",staff:STAFF[0],notes:""});setShowModal(true);}} style={{ borderRight:di<6?"1px solid var(--border)":"none", padding:"3px 4px", cursor:"pointer", background:isToday?"rgba(201,168,76,.03)":"transparent" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(201,168,76,.08)"} onMouseLeave={e=>e.currentTarget.style.background=isToday?"rgba(201,168,76,.03)":"transparent"}>{dayBks.map(b=>{ const client=clients.find(c=>c.id===b.client_id); const svc=services.find(s=>s.id===b.service_id); return <div key={b.id} onClick={e=>e.stopPropagation()} style={{ background:svc?.color?`${svc.color}33`:"rgba(201,168,76,.2)", border:`1px solid ${svc?.color||"var(--gold)"}66`, borderRadius:6, padding:"3px 6px", marginBottom:2, fontSize:11 }}><div style={{ fontWeight:600, color:svc?.color||"var(--gold)" }}>{client?.name}</div><div style={{ color:"var(--muted)" }}>{svc?.name}</div><button onClick={()=>deleteBooking(b.id)} style={{ background:"none", border:"none", color:"var(--red)", cursor:"pointer", fontSize:10, padding:0 }}>✕</button></div>; })}</div>; })}
                 </div>
               ))}
             </div>
@@ -432,20 +328,10 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
             </div>
             <div style={{ fontSize:13, color:"var(--gold)", marginBottom:16 }}>📅 {selectedSlot?.date} at {selectedSlot?.time}</div>
             <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Client</label>
-                <select style={{ width:"100%" }} value={form.clientId} onChange={e=>setForm(p=>({...p,clientId:e.target.value}))}>
-                  <option value="">Select client…</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-                </select></div>
-              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Service</label>
-                <select style={{ width:"100%" }} value={form.serviceId} onChange={e=>setForm(p=>({...p,serviceId:e.target.value}))}>
-                  <option value="">Select service…</option>{services.map(s=><option key={s.id} value={s.id}>{s.category} · {s.name} – {currency(s.price)}</option>)}
-                </select></div>
-              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Staff</label>
-                <select style={{ width:"100%" }} value={form.staff} onChange={e=>setForm(p=>({...p,staff:e.target.value}))}>
-                  {STAFF.map(s=><option key={s}>{s}</option>)}
-                </select></div>
-              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Notes</label>
-                <textarea style={{ width:"100%", minHeight:70 }} value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Special requests…"/></div>
+              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Client</label><select style={{ width:"100%" }} value={form.clientId} onChange={e=>setForm(p=>({...p,clientId:e.target.value}))}><option value="">Select client…</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Service</label><select style={{ width:"100%" }} value={form.serviceId} onChange={e=>setForm(p=>({...p,serviceId:e.target.value}))}><option value="">Select service…</option>{services.map(s=><option key={s.id} value={s.id}>{s.category} · {s.name} – {currency(s.price)}</option>)}</select></div>
+              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Staff</label><select style={{ width:"100%" }} value={form.staff} onChange={e=>setForm(p=>({...p,staff:e.target.value}))}>{STAFF.map(s=><option key={s}>{s}</option>)}</select></div>
+              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Notes</label><textarea style={{ width:"100%", minHeight:70 }} value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Special requests…"/></div>
               <button className="gold-btn" onClick={saveBooking} disabled={saving}>{saving?"Saving…":"Confirm Booking"}</button>
             </div>
           </div>
@@ -456,7 +342,7 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
 };
 
 // ─── Clients ──────────────────────────────────────────────────────────────────
-const Clients = ({ clients, setClients, bookings, services }) => {
+const Clients = ({ clients, setClients, bookings, services, userId }) => {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -469,7 +355,7 @@ const Clients = ({ clients, setClients, bookings, services }) => {
   const addClient = async () => {
     if (!newClient.name) return;
     setSaving(true);
-    const { data, error } = await supabase.from("clients").insert([{ name:newClient.name, phone:newClient.phone, email:newClient.email, notes:newClient.notes, tags:[], total_spent:0, visits:0, last_visit:"—" }]).select();
+    const { data, error } = await supabase.from("clients").insert([{ name:newClient.name, phone:newClient.phone, email:newClient.email, notes:newClient.notes, tags:[], total_spent:0, visits:0, last_visit:"—", user_id:userId }]).select();
     if (!error&&data) setClients(p=>[...p,data[0]]);
     setNewClient({ name:"", phone:"", email:"", notes:"" });
     setSaving(false); setShowAdd(false);
@@ -539,11 +425,9 @@ const Clients = ({ clients, setClients, bookings, services }) => {
             <h3 style={{ fontSize:20, color:"var(--cream)", marginBottom:20 }}>New Client</h3>
             <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
               {[["Name","name","Full name"],["Phone","phone","+351 9xx xxx xxx"],["Email","email","email@example.com"]].map(([label,key,ph])=>(
-                <div key={key}><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>{label}</label>
-                  <input style={{ width:"100%" }} placeholder={ph} value={newClient[key]} onChange={e=>setNewClient(p=>({...p,[key]:e.target.value}))}/></div>
+                <div key={key}><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>{label}</label><input style={{ width:"100%" }} placeholder={ph} value={newClient[key]} onChange={e=>setNewClient(p=>({...p,[key]:e.target.value}))}/></div>
               ))}
-              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Notes</label>
-                <textarea style={{ width:"100%", minHeight:70 }} value={newClient.notes} onChange={e=>setNewClient(p=>({...p,notes:e.target.value}))} placeholder="Preferences…"/></div>
+              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Notes</label><textarea style={{ width:"100%", minHeight:70 }} value={newClient.notes} onChange={e=>setNewClient(p=>({...p,notes:e.target.value}))} placeholder="Preferences…"/></div>
               <button className="gold-btn" onClick={addClient} disabled={saving}>{saving?"Saving…":"Add Client"}</button>
             </div>
           </div>
@@ -554,7 +438,7 @@ const Clients = ({ clients, setClients, bookings, services }) => {
 };
 
 // ─── Services ─────────────────────────────────────────────────────────────────
-const ServicesView = ({ services, setServices }) => {
+const ServicesView = ({ services, setServices, userId }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ category:"Hair", name:"", price:"", duration:"60" });
   const [saving, setSaving] = useState(false);
@@ -563,7 +447,7 @@ const ServicesView = ({ services, setServices }) => {
   const addService = async () => {
     if (!form.name||!form.price) return;
     setSaving(true);
-    const { data, error } = await supabase.from("services").insert([{ name:form.name, category:form.category, price:Number(form.price), duration:Number(form.duration), color:CAT_COLORS[form.category]||"#c9a84c", user_id: user.id }]).select();
+    const { data, error } = await supabase.from("services").insert([{ name:form.name, category:form.category, price:Number(form.price), duration:Number(form.duration), color:CAT_COLORS[form.category]||"#c9a84c", user_id:userId }]).select();
     if (!error&&data) setServices(p=>[...p,data[0]]);
     setForm({ category:"Hair", name:"", price:"", duration:"60" });
     setSaving(false); setShowAdd(false);
@@ -603,17 +487,11 @@ const ServicesView = ({ services, setServices }) => {
           <div className="card fade-up" style={{ width:"100%", maxWidth:400, padding:28 }} onClick={e=>e.stopPropagation()}>
             <h3 style={{ fontSize:20, color:"var(--cream)", marginBottom:20 }}>Add Service</h3>
             <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Category</label>
-                <select style={{ width:"100%" }} value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))}>
-                  {CATS.map(c=><option key={c}>{c}</option>)}
-                </select></div>
-              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Service Name</label>
-                <input style={{ width:"100%" }} placeholder="e.g. Highlights" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div>
+              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Category</label><select style={{ width:"100%" }} value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))}>{CATS.map(c=><option key={c}>{c}</option>)}</select></div>
+              <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Service Name</label><input style={{ width:"100%" }} placeholder="e.g. Highlights" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Price (€)</label>
-                  <input style={{ width:"100%" }} type="number" min="0" placeholder="75" value={form.price} onChange={e=>setForm(p=>({...p,price:e.target.value}))}/></div>
-                <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Duration (min)</label>
-                  <input style={{ width:"100%" }} type="number" min="15" placeholder="60" value={form.duration} onChange={e=>setForm(p=>({...p,duration:e.target.value}))}/></div>
+                <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Price (€)</label><input style={{ width:"100%" }} type="number" min="0" placeholder="75" value={form.price} onChange={e=>setForm(p=>({...p,price:e.target.value}))}/></div>
+                <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Duration (min)</label><input style={{ width:"100%" }} type="number" min="15" placeholder="60" value={form.duration} onChange={e=>setForm(p=>({...p,duration:e.target.value}))}/></div>
               </div>
               <button className="gold-btn" onClick={addService} disabled={saving}>{saving?"Saving…":"Save Service"}</button>
             </div>
@@ -684,20 +562,9 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
           <div className="card" style={{ display:"flex", flexDirection:"column", gap:16 }}>
             <h3 style={{ fontSize:18, color:"var(--cream)" }}>Generate Message</h3>
-            <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Client</label>
-              <select style={{ width:"100%" }} value={selectedClient||""} onChange={e=>setSelectedClient(e.target.value)}>
-                <option value="">Choose client…</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-              </select></div>
-            <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Goal</label>
-              <select style={{ width:"100%" }} value={aiGoal} onChange={e=>setAiGoal(e.target.value)}>
-                {GOALS.map(g=><option key={g.value} value={g.value}>{g.label}</option>)}
-              </select></div>
-            <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:6, display:"block" }}>Channel</label>
-              <div style={{ display:"flex", gap:8 }}>
-                {[["email","📧 Email"],["sms","📱 SMS"],["whatsapp","💬 WhatsApp"]].map(([val,label])=>(
-                  <button key={val} onClick={()=>setMsgType(val)} style={{ flex:1, padding:"8px", border:`1px solid ${msgType===val?"var(--gold)":"var(--border)"}`, borderRadius:8, background:msgType===val?"rgba(201,168,76,.12)":"transparent", color:msgType===val?"var(--gold)":"var(--muted)", cursor:"pointer", fontSize:12, fontFamily:"'DM Sans',sans-serif" }}>{label}</button>
-                ))}
-              </div></div>
+            <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Client</label><select style={{ width:"100%" }} value={selectedClient||""} onChange={e=>setSelectedClient(e.target.value)}><option value="">Choose client…</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+            <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:4, display:"block" }}>Goal</label><select style={{ width:"100%" }} value={aiGoal} onChange={e=>setAiGoal(e.target.value)}>{GOALS.map(g=><option key={g.value} value={g.value}>{g.label}</option>)}</select></div>
+            <div><label style={{ fontSize:12, color:"var(--muted)", marginBottom:6, display:"block" }}>Channel</label><div style={{ display:"flex", gap:8 }}>{[["email","📧 Email"],["sms","📱 SMS"],["whatsapp","💬 WhatsApp"]].map(([val,label])=>(<button key={val} onClick={()=>setMsgType(val)} style={{ flex:1, padding:"8px", border:`1px solid ${msgType===val?"var(--gold)":"var(--border)"}`, borderRadius:8, background:msgType===val?"rgba(201,168,76,.12)":"transparent", color:msgType===val?"var(--gold)":"var(--muted)", cursor:"pointer", fontSize:12, fontFamily:"'DM Sans',sans-serif" }}>{label}</button>))}</div></div>
             <button className="gold-btn" onClick={generateMessage} disabled={!selectedClient||loading}>{loading?<><span className="spin" style={{ marginRight:6 }}>◌</span>Generating…</>:"✨ Generate with AI"}</button>
           </div>
           <div className="card" style={{ display:"flex", flexDirection:"column", gap:12 }}>
@@ -709,17 +576,15 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
               {loading?<div style={{ display:"flex", flexDirection:"column", gap:8 }}>{[100,80,90,60].map((w,i)=><div key={i} style={{ height:14, borderRadius:4, background:"var(--border)", width:`${w}%`, animation:`pulse 1.2s ${i*.15}s infinite` }}/>)}</div>:result||"Your AI-generated message will appear here…"}
             </div>
             {result&&<button className="gold-btn" onClick={async()=>{
-  const client = clients.find(c=>c.id===Number(selectedClient));
-  if (msgType==="sms" && client?.phone) {
-    await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:client.phone,message:result})});
-    alert("SMS sent to "+client.name+"!");
-  } else if (msgType==="email" && client?.email) {
-    await fetch("/api/send-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:client.email,subject:"Message from your salon",html:`<div style="font-family:Georgia,serif;padding:32px;background:#0f0e0d;color:#e8ddd0;border-radius:16px;">${result.replace(/\n/g,"<br/>")}</div>`})});
-    alert("Email sent to "+client.name+"!");
-  } else {
-    alert("No "+msgType+" found for this client!");
-  }
-}}>Send {msgType==="email"?"📧 Email":msgType==="sms"?"📱 SMS":"💬 WhatsApp"}</button>}
+              const client=clients.find(c=>c.id===Number(selectedClient));
+              if (msgType==="sms"&&client?.phone) {
+                await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:client.phone,message:result})});
+                alert("SMS sent to "+client.name+"!");
+              } else if (msgType==="email"&&client?.email) {
+                await fetch("/api/send-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:client.email,subject:"Message from your salon",html:`<div style="font-family:Georgia,serif;padding:32px;background:#0f0e0d;color:#e8ddd0;border-radius:16px;">${result.replace(/\n/g,"<br/>")}</div>`})});
+                alert("Email sent to "+client.name+"!");
+              } else { alert("No "+msgType+" found for this client!"); }
+            }}>Send {msgType==="email"?"📧 Email":msgType==="sms"?"📱 SMS":"💬 WhatsApp"}</button>}
           </div>
         </div>
       )}
@@ -753,19 +618,18 @@ const SalonApp = ({ userData }) => {
   const [clients, setClients] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
-  const [salonName] = useState("Salon Élite");
   const [loading, setLoading] = useState(true);
 
+  const salonName = userData.salon_name || "My Salon";
   const daysLeft = getDaysLeft(userData.trial_start);
   const isActive = userData.subscription_status === "active" || daysLeft > 0;
 
   useEffect(()=>{
-   const loadData = async () => {
-  const [{ data:c },{ data:s },{ data:b }] = await Promise.all([
-    supabase.from("clients").select("*").eq("user_id", user.id).order("created_at",{ascending:false}),
-    supabase.from("services").select("*").eq("user_id", user.id).order("created_at",{ascending:true}),
-    supabase.from("bookings").select("*").eq("user_id", user.id).order("date",{ascending:true}),
-  ]);
+    const loadData = async () => {
+      const [{ data:c },{ data:s },{ data:b }] = await Promise.all([
+        supabase.from("clients").select("*").eq("user_id", user.id).order("created_at",{ascending:false}),
+        supabase.from("services").select("*").eq("user_id", user.id).order("created_at",{ascending:true}),
+        supabase.from("bookings").select("*").eq("user_id", user.id).order("date",{ascending:true}),
       ]);
       if (c) setClients(c);
       if (s) setServices(s);
@@ -787,9 +651,7 @@ const SalonApp = ({ userData }) => {
 
   if (loading) return (
     <div style={{ height:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
-      <div style={{ width:48, height:48, borderRadius:14, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <Icon name="star" size={24} color="#1a1410"/>
-      </div>
+      <div style={{ width:48, height:48, borderRadius:14, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}><Icon name="star" size={24} color="#1a1410"/></div>
       <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, color:"var(--cream)" }}>Loading your salon…</div>
     </div>
   );
@@ -799,12 +661,10 @@ const SalonApp = ({ userData }) => {
       <aside style={{ width:220, background:"var(--surface)", borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", flexShrink:0 }}>
         <div style={{ padding:"24px 20px 20px", borderBottom:"1px solid var(--border)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <Icon name="star" size={18} color="#1a1410"/>
-            </div>
+            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}><Icon name="star" size={18} color="#1a1410"/></div>
             <div>
-              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, fontWeight:700, color:"var(--cream)" }}>SalonPro</div>
-              <div style={{ fontSize:10, color:"var(--muted)", letterSpacing:".05em", textTransform:"uppercase" }}>Management Suite</div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, fontWeight:700, color:"var(--cream)" }}>{salonName}</div>
+              <div style={{ fontSize:10, color:"var(--muted)", letterSpacing:".05em", textTransform:"uppercase" }}>Powered by SalonPro</div>
             </div>
           </div>
         </div>
@@ -812,9 +672,7 @@ const SalonApp = ({ userData }) => {
           <div style={{ fontSize:11, color:"var(--muted)", marginBottom:2 }}>Logged in as</div>
           <div style={{ fontWeight:600, color:"var(--gold)", fontSize:13, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user?.emailAddresses?.[0]?.emailAddress}</div>
           {userData.subscription_status !== "active" && (
-            <div style={{ marginTop:6, padding:"4px 8px", background:"rgba(201,168,76,.1)", borderRadius:6, fontSize:11, color:"var(--gold)" }}>
-              ⏱ {daysLeft} day{daysLeft!==1?"s":""} left in trial
-            </div>
+            <div style={{ marginTop:6, padding:"4px 8px", background:"rgba(201,168,76,.1)", borderRadius:6, fontSize:11, color:"var(--gold)" }}>⏱ {daysLeft} day{daysLeft!==1?"s":""} left in trial</div>
           )}
           {userData.subscription_status === "active" && (
             <div style={{ marginTop:6 }}><span className="badge badge-green">✓ Active subscription</span></div>
@@ -830,31 +688,19 @@ const SalonApp = ({ userData }) => {
           ))}
         </nav>
         <div style={{ padding:"14px 16px", borderTop:"1px solid var(--border)", display:"flex", flexDirection:"column", gap:8 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}>
-            <span style={{ color:"var(--muted)" }}>Clients</span>
-            <span style={{ color:"var(--gold)", fontWeight:600 }}>{clients.length}</span>
-          </div>
-          <div style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}>
-            <span style={{ color:"var(--muted)" }}>Services</span>
-            <span style={{ color:"var(--cream)", fontWeight:600 }}>{services.length}</span>
-          </div>
-          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-            <div style={{ width:6, height:6, borderRadius:"50%", background:"var(--green)" }}/>
-            <div style={{ fontSize:11, color:"var(--muted)" }}>Supabase connected</div>
-          </div>
-          <button onClick={()=>signOut()}
-            style={{ display:"flex", alignItems:"center", gap:8, background:"transparent", border:"1px solid var(--border)", borderRadius:8, padding:"7px 10px", color:"var(--muted)", cursor:"pointer", fontSize:12, fontFamily:"'DM Sans',sans-serif", marginTop:4, width:"100%", transition:"all .2s" }}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--red)";e.currentTarget.style.color="var(--red)";}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.color="var(--muted)";}}>
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}><span style={{ color:"var(--muted)" }}>Clients</span><span style={{ color:"var(--gold)", fontWeight:600 }}>{clients.length}</span></div>
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}><span style={{ color:"var(--muted)" }}>Services</span><span style={{ color:"var(--cream)", fontWeight:600 }}>{services.length}</span></div>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}><div style={{ width:6, height:6, borderRadius:"50%", background:"var(--green)" }}/><div style={{ fontSize:11, color:"var(--muted)" }}>Supabase connected</div></div>
+          <button onClick={()=>signOut()} style={{ display:"flex", alignItems:"center", gap:8, background:"transparent", border:"1px solid var(--border)", borderRadius:8, padding:"7px 10px", color:"var(--muted)", cursor:"pointer", fontSize:12, fontFamily:"'DM Sans',sans-serif", marginTop:4, width:"100%", transition:"all .2s" }} onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--red)";e.currentTarget.style.color="var(--red)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.color="var(--muted)";}}>
             <Icon name="logout" size={14}/> Sign out
           </button>
         </div>
       </aside>
       <main style={{ flex:1, overflowY:"auto", padding:"28px" }}>
         {page==="dashboard"&&<Dashboard bookings={bookings} clients={clients} services={services} salonName={salonName}/>}
-        {page==="calendar" &&<CalendarView bookings={bookings} setBookings={setBookings} clients={clients} services={services}/>}
-        {page==="clients"  &&<Clients clients={clients} setClients={setClients} bookings={bookings} services={services}/>}
-        {page==="services" &&<ServicesView services={services} setServices={setServices}/>}
+        {page==="calendar" &&<CalendarView bookings={bookings} setBookings={setBookings} clients={clients} services={services} userId={user.id}/>}
+        {page==="clients"  &&<Clients clients={clients} setClients={setClients} bookings={bookings} services={services} userId={user.id}/>}
+        {page==="services" &&<ServicesView services={services} setServices={setServices} userId={user.id}/>}
         {page==="ai"       &&<AIHub clients={clients} bookings={bookings} services={services} salonName={salonName}/>}
       </main>
     </div>
@@ -879,16 +725,16 @@ const AppGate = () => {
           id: user.id, email: email, plan: "trial", subscription_status: "trialing",
         }]).select().single();
         setUserData(newUser);
-// Send welcome email
-      await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: email,
-          subject: "Welcome to SalonPro ✨ Your 14-day trial starts now",
-          html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#0f0e0d;color:#e8ddd0;padding:40px;border-radius:16px;"><h1 style="color:#c9a84c;text-align:center;">SalonPro</h1><h2 style="color:#f5ede0;">Welcome! Your free trial has started 🎉</h2><p style="line-height:1.7;">Your 14-day free trial has started. Add your services, import clients, and start booking appointments.</p><div style="text-align:center;margin:32px 0;"><a href="https://www.salonproai.com/?app=true" style="background:linear-gradient(135deg,#c9a84c,#e4c97e);color:#1a1410;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">Open SalonPro →</a></div><p style="color:#7a7167;font-size:13px;">Trial ends in 14 days. Plans from €29/month.</p></div>`
-        })
-      });
+        // Send welcome email
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: email,
+            subject: "Welcome to SalonPro ✨ Your 14-day trial starts now",
+            html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#0f0e0d;color:#e8ddd0;padding:40px;border-radius:16px;"><h1 style="color:#c9a84c;text-align:center;">SalonPro</h1><h2 style="color:#f5ede0;">Welcome! Your free trial has started 🎉</h2><p style="line-height:1.7;">Your 14-day free trial has started. Add your services, import clients, and start booking appointments.</p><div style="text-align:center;margin:32px 0;"><a href="https://www.salonproai.com/?app=true" style="background:linear-gradient(135deg,#c9a84c,#e4c97e);color:#1a1410;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">Open SalonPro →</a></div><p style="color:#7a7167;font-size:13px;">Trial ends in 14 days. Plans from €29/month.</p></div>`
+          })
+        });
       }
       setLoading(false);
     };
@@ -897,12 +743,12 @@ const AppGate = () => {
 
   if (loading) return (
     <div style={{ height:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
-      <div style={{ width:48, height:48, borderRadius:14, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <Icon name="star" size={24} color="#1a1410"/>
-      </div>
+      <div style={{ width:48, height:48, borderRadius:14, background:"linear-gradient(135deg,var(--gold),var(--gold-lt))", display:"flex", alignItems:"center", justifyContent:"center" }}><Icon name="star" size={24} color="#1a1410"/></div>
       <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, color:"var(--cream)" }}>Setting up your account…</div>
     </div>
   );
+
+  if (!userData.onboarded) return <Onboarding user={user} userData={userData} onComplete={(data) => setUserData(prev => ({...prev, ...data}))}/>;
 
   return <SalonApp userData={userData}/>;
 };
@@ -911,9 +757,7 @@ const AppGate = () => {
 export default function App() {
   const params = new URLSearchParams(window.location.search);
   const isApp = params.has('app') || localStorage.getItem('salonpro_user');
-
   if (!isApp) return <LandingPage />;
-
   return (
     <>
       <GlobalStyle/>
