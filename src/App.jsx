@@ -867,6 +867,16 @@ const AppGate = () => {
           id: user.id, email: email, plan: "trial", subscription_status: "trialing",
         }]).select().single();
         setUserData(newUser);
+// Send welcome email
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: email,
+          subject: "Welcome to SalonPro ✨ Your 14-day trial starts now",
+          html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#0f0e0d;color:#e8ddd0;padding:40px;border-radius:16px;"><h1 style="color:#c9a84c;text-align:center;">SalonPro</h1><h2 style="color:#f5ede0;">Welcome! Your free trial has started 🎉</h2><p style="line-height:1.7;">Your 14-day free trial has started. Add your services, import clients, and start booking appointments.</p><div style="text-align:center;margin:32px 0;"><a href="https://www.salonproai.com/?app=true" style="background:linear-gradient(135deg,#c9a84c,#e4c97e);color:#1a1410;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">Open SalonPro →</a></div><p style="color:#7a7167;font-size:13px;">Trial ends in 14 days. Plans from €29/month.</p></div>`
+        })
+      });
       }
       setLoading(false);
     };
