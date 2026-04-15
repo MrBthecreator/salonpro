@@ -361,7 +361,7 @@ const CalendarView = ({ bookings, setBookings, clients, services }) => {
   const saveBooking = async () => {
     if (!form.clientId||!form.serviceId) return;
     setSaving(true);
-    const { data, error } = await supabase.from("bookings").insert([{ client_id:Number(form.clientId), service_id:Number(form.serviceId), date:selectedSlot.date, time:selectedSlot.time, staff:form.staff, status:"confirmed", notes:form.notes }]).select();
+    const { data, error } = await supabase.from("bookings").insert([{ { client_id:Number(form.clientId), service_id:Number(form.serviceId), date:selectedSlot.date, time:selectedSlot.time, staff:form.staff, status:"confirmed", notes:form.notes, user_id: user.id } }]).select();
     if (!error&&data) setBookings(p=>[...p,data[0]]);
     setSaving(false); setShowModal(false);
   };
@@ -563,7 +563,7 @@ const ServicesView = ({ services, setServices }) => {
   const addService = async () => {
     if (!form.name||!form.price) return;
     setSaving(true);
-    const { data, error } = await supabase.from("services").insert([{ name:form.name, category:form.category, price:Number(form.price), duration:Number(form.duration), color:CAT_COLORS[form.category]||"#c9a84c" }]).select();
+    const { data, error } = await supabase.from("services").insert([{ name:form.name, category:form.category, price:Number(form.price), duration:Number(form.duration), color:CAT_COLORS[form.category]||"#c9a84c", user_id: user.id }]).select();
     if (!error&&data) setServices(p=>[...p,data[0]]);
     setForm({ category:"Hair", name:"", price:"", duration:"60" });
     setSaving(false); setShowAdd(false);
@@ -760,11 +760,12 @@ const SalonApp = ({ userData }) => {
   const isActive = userData.subscription_status === "active" || daysLeft > 0;
 
   useEffect(()=>{
-    const loadData = async () => {
-      const [{ data:c },{ data:s },{ data:b }] = await Promise.all([
-        supabase.from("clients").select("*").order("created_at",{ascending:false}),
-        supabase.from("services").select("*").order("created_at",{ascending:true}),
-        supabase.from("bookings").select("*").order("date",{ascending:true}),
+   const loadData = async () => {
+  const [{ data:c },{ data:s },{ data:b }] = await Promise.all([
+    supabase.from("clients").select("*").eq("user_id", user.id).order("created_at",{ascending:false}),
+    supabase.from("services").select("*").eq("user_id", user.id).order("created_at",{ascending:true}),
+    supabase.from("bookings").select("*").eq("user_id", user.id).order("date",{ascending:true}),
+  ]);
       ]);
       if (c) setClients(c);
       if (s) setServices(s);
