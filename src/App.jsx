@@ -524,10 +524,9 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
     const lastSvc=lastBk?services.find(s=>s.id===lastBk.service_id):null;
     const prompt=`You are a professional salon assistant for "${salonName}". Write a ${msgType==="email"?"personalized email":msgType==="sms"?"short SMS (max 160 chars)":"WhatsApp message"} for goal: "${aiGoal}". Client: ${client.name}, last visit: ${client.last_visit} (${lastSvc?.name||"unknown"}), ${client.visits||0} visits, notes: ${client.notes||"none"}. Services: ${services.map(s=>`${s.name} (€${s.price})`).join(", ")}. ${msgType==="email"?"Include subject line first starting with 'Subject:'.":""} Write only the message, be warm and personal.`;
     try {
-      const res=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
       const data=await res.json();
-      console.log("AI response:", data);
-      setResult(data.content?.[0]?.text||data.error||"Error.");
+      setResult(data.content?.[0]?.text||"Error.");
     } catch { setResult("Connection error."); }
     setLoading(false);
   };
@@ -538,7 +537,7 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
     const newHistory=[...chatHistory,{role:"user",content:userMsg}];
     setChatHistory(newHistory); setChatLoading(true);
     try {
-      const res=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:`You are SalonPro AI for "${salonName}". Clients: ${clients.map(c=>c.name).join(", ")}. Services: ${services.map(s=>s.name).join(", ")}.`,messages:newHistory.map(m=>({role:m.role,content:m.content}))})});
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:`You are SalonPro AI for "${salonName}". Clients: ${clients.map(c=>c.name).join(", ")}. Services: ${services.map(s=>s.name).join(", ")}.`,messages:newHistory.map(m=>({role:m.role,content:m.content}))})});
       const data=await res.json();
       setChatHistory(p=>[...p,{role:"assistant",content:data.content?.[0]?.text||"Error."}]);
     } catch { setChatHistory(p=>[...p,{role:"assistant",content:"Connection error."}]); }
