@@ -526,7 +526,8 @@ const AIHub = ({ clients, bookings, services, salonName }) => {
     try {
       const res=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
       const data=await res.json();
-      setResult(data.content?.[0]?.text||"Error.");
+      console.log("AI response:", data);
+setResult(data.content?.[0]?.text||data.error||"Error.");
     } catch { setResult("Connection error."); }
     setLoading(false);
   };
